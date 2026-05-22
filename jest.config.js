@@ -3,10 +3,11 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   moduleNameMapper: {
-    '^@types/(.*)$': '<rootDir>/types/$1',
-    '^@api/(.*)$': '<rootDir>/api/$1',
-    '^@stores/(.*)$': '<rootDir>/stores/$1',
-    '^@queries/(.*)$': '<rootDir>/queries/$1'
+    '^@/types/(.*)$': '<rootDir>/types/$1',
+    '^@/api/(.*)$': '<rootDir>/api/$1',
+    '^@/stores/(.*)$': '<rootDir>/stores/$1',
+    '^@/queries/(.*)$': '<rootDir>/queries/$1',
+    '^@/(.*)$': '<rootDir>/$1'
   },
   transform: {
     '^.+\\.(ts|tsx)$': ['babel-jest', {
@@ -15,7 +16,7 @@ module.exports = {
     '^.+\\.(js|jsx)$': 'babel-jest'
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|expo|@react-native|@babel|@testing-library)/)'
+    'node_modules/(?!(react-native|expo|@react-native|@babel|@testing-library|react-native-unistyles)/)'
   ],
   testMatch: [
     '**/tests/**/*.test.ts',

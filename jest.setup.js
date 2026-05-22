@@ -1,3 +1,8 @@
+// Mock expo virtual environment module
+jest.mock('expo/virtual/env', () => ({
+  env: process.env
+}), { virtual: true });
+
 // Only setup React Native testing utilities for component/integration tests
 // Unit tests for types, utilities don't need this
 if (process.env.JEST_ENV !== 'unit') {

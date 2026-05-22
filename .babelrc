@@ -1,0 +1,25 @@
+{
+  "presets": [
+    "babel-preset-expo",
+    "@babel/preset-typescript"
+  ],
+  "plugins": [
+    [
+      "module-resolver",
+      {
+        "alias": {
+          "@types": "./types",
+          "@api": "./api",
+          "@stores": "./stores",
+          "@queries": "./queries",
+          "@/types": "./types",
+          "@/api": "./api",
+          "@/stores": "./stores",
+          "@/queries": "./queries",
+          "@": "./"
+        }
+      }
+    ],
+    "react-native-reanimated/plugin"
+  ]
+}
