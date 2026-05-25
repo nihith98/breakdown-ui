@@ -1,14 +1,6 @@
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/auth';
 
-export default async function HomePage() {
-  const user = await getCurrentUser();
-
-  if (user) {
-    // Redirect to dashboard if user is logged in
-    // (This will be handled by middleware in a real app)
-  }
-
+export default function HomePage() {
   return (
     <main style={{ maxWidth: '600px', margin: '4rem auto', padding: '0 2rem' }}>
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
