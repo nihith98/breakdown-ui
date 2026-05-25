@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
       ? `/groups/${groupId}/expenses`
       : '/expenses';
 
-    const response = await apiClient.get(url, {
+    const axiosResponse = await apiClient.get(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const { data } = handleResponseStructure(response);
+    const { data } = handleResponseStructure(axiosResponse.data);
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Get expenses error:', error.message);
@@ -47,11 +47,11 @@ export async function POST(request: NextRequest) {
       ? `/groups/${groupId}/expenses`
       : '/expenses';
 
-    const response = await apiClient.post(url, expenseData, {
+    const axiosResponse = await apiClient.post(url, expenseData, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const { data } = handleResponseStructure(response);
+    const { data } = handleResponseStructure(axiosResponse.data);
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Create expense error:', error.message);

@@ -15,8 +15,8 @@ export async function addExpense(
   try {
     // Note: In a real app, you'd get the token from cookies
     // This is a simplified example
-    const response = await apiClient.post(`/groups/${groupId}/expenses`, input);
-    const { data } = handleResponseStructure(response);
+    const axiosResponse = await apiClient.post(`/groups/${groupId}/expenses`, input);
+    const { data } = handleResponseStructure(axiosResponse.data);
     return data;
   } catch (error: any) {
     throw new Error(error.message || 'Failed to add expense');

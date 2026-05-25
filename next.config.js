@@ -1,10 +1,8 @@
 ﻿/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
-  experimental: {
-    serverComponentsExternalPackages: ['axios'],
-  },
+  poweredByHeader: false,
+  serverExternalPackages: ['axios'],
 };
 
 module.exports = nextConfig;

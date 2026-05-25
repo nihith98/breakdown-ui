@@ -13,11 +13,11 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const response = await apiClient.get(`/groups/${params.id}`, {
+    const axiosResponse = await apiClient.get(`/groups/${params.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const { data } = handleResponseStructure(response);
+    const { data } = handleResponseStructure(axiosResponse.data);
     return NextResponse.json(data);
   } catch (error: any) {
     console.error(`Get group ${params.id} error:`, error.message);
@@ -41,11 +41,11 @@ export async function PUT(
 
     const body = await request.json();
 
-    const response = await apiClient.put(`/groups/${params.id}`, body, {
+    const axiosResponse = await apiClient.put(`/groups/${params.id}`, body, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const { data } = handleResponseStructure(response);
+    const { data } = handleResponseStructure(axiosResponse.data);
     return NextResponse.json(data);
   } catch (error: any) {
     console.error(`Update group ${params.id} error:`, error.message);
