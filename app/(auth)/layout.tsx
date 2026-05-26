@@ -44,7 +44,7 @@ export default function AuthLayout({
               className={styles.statusBarLink}
               title="View on GitHub"
             >
-              feedback
+              github
             </a>
             <span className={styles.statusBarDivider}>·</span>
             <a
