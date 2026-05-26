@@ -188,3 +188,19 @@
   letter-spacing: 0.6px;
   text-transform: uppercase;
 }
+
+.statusBarLink {
+  color: var(--fg-link);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  cursor: pointer;
+}
+
+.statusBarLink:hover {
+  color: var(--accent-highlight);
+}
+
+.statusBarLink:focus {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
