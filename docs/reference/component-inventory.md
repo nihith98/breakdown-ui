@@ -156,7 +156,7 @@ interface TextInputProps {
   value: string;
   
   /** Change handler */
-  onChange: (text: string) => void;
+  onChange: React.ChangeEventHandler<HTMLInputElement>;
   
   /** Error state */
   error?: boolean;
@@ -191,11 +191,11 @@ interface TextInputProps {
 import { TextInput } from '@/components/form/TextInput';
 
 <TextInput
-  label="Email"
-  type="email"
-  placeholder="alice@example.com"
-  value={email}
-  onChange={setEmail}
+  label="Username"
+  type="text"
+  placeholder="alice"
+  value={username}
+  onChange={(e) => setUsername(e.target.value)}
 />
 
 <TextInput
@@ -203,7 +203,7 @@ import { TextInput } from '@/components/form/TextInput';
   type="amount"
   placeholder="0.00"
   value={amount}
-  onChange={setAmount}
+  onChange={(e) => setAmount(e.target.value)}
   error={!isValidAmount}
   errorMessage="Amount must be greater than 0"
 />
@@ -227,7 +227,7 @@ interface ButtonProps {
   size?: 'Sm' | 'Md' | 'Lg';
   
   /** Click handler */
-  onPress: () => void;
+  onClick: () => void;
   
   /** Disabled state */
   disabled?: boolean;
@@ -253,15 +253,15 @@ interface ButtonProps {
 ```typescript
 import { Button } from '@/components/form/Button';
 
-<Button variant="Primary" size="Lg" onPress={handleSubmit}>
+<Button variant="Primary" size="Lg" onClick={handleSubmit}>
   Create Group
 </Button>
 
-<Button variant="Danger" size="Md" onPress={handleDelete}>
+<Button variant="Danger" size="Md" onClick={handleDelete}>
   Delete
 </Button>
 
-<Button variant="Ghost" size="Sm" onPress={handleCancel}>
+<Button variant="Ghost" size="Sm" onClick={handleCancel}>
   Cancel
 </Button>
 ```
@@ -317,7 +317,7 @@ interface TransactionRowProps {
   transaction: Transaction;
   
   /** Optional click handler */
-  onPress?: () => void;
+  onClick?: () => void;
   
   /** Show avatar for payer */
   showAvatar?: boolean;
@@ -336,7 +336,7 @@ import { TransactionRow } from '@/components/ui/TransactionRow';
 <TransactionRow
   transaction={transaction}
   showAvatar={true}
-  onPress={() => navigateToDetails(transaction.id)}
+  onClick={() => router.push(`/groups/${transaction.groupId}/transactions/${transaction.id}`)}
 />
 ```
 
@@ -352,7 +352,7 @@ interface SettlementRowProps {
   settlement: Settlement;
   
   /** Optional click handler to mark as completed */
-  onMarkComplete?: () => void;
+  onMarkComplete?: () => void;  // triggers a server action
 }
 ```
 
@@ -429,7 +429,7 @@ interface CardProps {
   variant?: 'tight' | 'flush';
   
   /** Optional click handler */
-  onPress?: () => void;
+  onClick?: () => void;
   
   /** Custom background color */
   backgroundColor?: string;
@@ -453,7 +453,7 @@ import { Card } from '@/components/ui/Card';
   <Text>Card content</Text>
 </Card>
 
-<Card variant="flush" onPress={handlePress}>
+<Card variant="flush" onClick={handlePress}>
   {/* Borderless card */}
 </Card>
 ```
@@ -470,7 +470,7 @@ interface TransactionListProps {
   transactions: Transaction[];
   
   /** Click handler for row */
-  onRowPress?: (transaction: Transaction) => void;
+  onRowClick?: (transaction: Transaction) => void;
   
   /** Show empty state if no transactions */
   showEmpty?: boolean;
@@ -484,7 +484,7 @@ import { TransactionList } from '@/components/ui/TransactionList';
 <TransactionList
   transactions={transactions}
   showEmpty={true}
-  onRowPress={(txn) => navigate(`/transaction/${txn.id}`)}
+  onRowClick={(txn) => router.push(`/groups/${txn.groupId}/transactions/${txn.id}`)}
 />
 ```
 
@@ -549,7 +549,7 @@ interface EmptyStateProps {
   /** Optional action button */
   action?: {
     label: string;
-    onPress: () => void;
+    onClick: () => void;
   };
   
   /** Optional icon */
@@ -567,7 +567,7 @@ import { EmptyState } from '@/components/feedback/EmptyState';
     subtext="Add the first one to get started"
     action={{
       label: "Add Transaction",
-      onPress: () => navigate("/add-transaction")
+      onClick: () => router.push("/groups/new-transaction")
     }}
   />
 )}
@@ -663,12 +663,12 @@ interface ScreenHeaderProps {
   showBack?: boolean;
   
   /** Back button handler */
-  onBackPress?: () => void;
+  onBack?: () => void;
   
   /** Right action button */
   rightAction?: {
     icon: ReactNode;
-    onPress: () => void;
+    onClick: () => void;
   };
 }
 ```
@@ -680,10 +680,10 @@ import { ScreenHeader } from '@/components/navigation/ScreenHeader';
 <ScreenHeader
   title="Group Details"
   showBack={true}
-  onBackPress={goBack}
+  onBack={() => router.back()}
   rightAction={{
     icon: <SettingsIcon />,
-    onPress: openSettings
+    onClick: openSettings
   }}
 />
 ```

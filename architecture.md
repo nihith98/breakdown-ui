@@ -1,6 +1,6 @@
 # breakDown-ui — System Architecture
 
-**React Native 0.79 + Expo SDK 55 compiles one TypeScript codebase to web PWA (Vercel/AWS/GCP), iOS App Store, and Android Play Store.**
+**Next.js 15 web + PWA frontend for privacy-first expense splitting. Server components by default; client interactivity via `'use client'` directives. API routes middleware to Java backend.**
 
 ---
 
@@ -8,183 +8,260 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│           Expo Router (app/ directory)                  │
-│  Routes rendered as web pages AND native stack screens  │
+│        Next.js App Router (app/ directory)              │
+│  Server components (default) fetch data server-side     │
 └─────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────┐
-│  Zustand Stores (UI state) + TanStack Query (async)    │
-│  currentGroupId, modal visibility, cached server data  │
+│     'use client' Components (components/ directory)     │
+│  React hooks (useState, useEffect) for UI state only    │
 └─────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────┐
-│           Axios HTTP Client (api/)                      │
-│  Calls Java backend, typed via ResponseStructure<T>    │
+│   'use server' Server Actions (app/*/actions.ts)        │
+│  Form submissions and mutations, typed via types/       │
 └─────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────┐
-│         Java Backend (breakdown-dashboard-svc)          │
-│  Manages groups, expenses, calculations, persistence   │
+│   API Routes (app/api/ directory) + Axios Client        │
+│  Middleware: Next.js → Java backend (ResponseStructure) │
+└─────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────┐
+│    Java Backend (breakdown-dashboard-svc, auth-svc)     │
+│  Groups, expenses, calculations, persistence, auth      │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## State Ownership
+## Component Architecture
 
-### Zustand — UI State Only
-Zustand stores own transient UI state:
-- `currentGroupId` — which group is selected in the UI
-- `isModalOpen` — which modal (create expense, add friend) is visible
-- `accessToken` — authentication token for HTTP headers
-- `selectedExpenseId` — which expense is being edited
+### Server Components (Default)
+Fetch data server-side, render once on request:
 
-**Pattern:**
 ```typescript
-import create from 'zustand';
+// app/(dashboard)/groups/[id]/page.tsx (server component)
+import { getGroup, getExpenses } from '@/lib/group-service';
 
-interface GroupStore {
-  currentGroupId: string | null;
-  setCurrentGroupId: (id: string) => void;
-  isModalOpen: boolean;
-  setIsModalOpen: (open: boolean) => void;
+export default async function GroupPage({ params }: { params: { id: string } }) {
+  const group = await getGroup(params.id);
+  const expenses = await getExpenses(params.id);
+  
+  return (
+    <div>
+      <h1>{group.name}</h1>
+      <ExpenseList expenses={expenses} />  {/* Client component */}
+    </div>
+  );
+}
+```
+
+**Benefits:**
+- No client-side data fetching waterfall
+- Sensitive logic (token validation) stays server-side
+- Smaller bundle size
+
+### Client Components
+Handle interactivity only. Keep logic minimal:
+
+```typescript
+// components/ExpenseList.tsx ('use client' component)
+'use client';
+
+import { useState } from 'react';
+import { Expense } from '@/types';
+
+interface ExpenseListProps {
+  expenses: Expense[];
 }
 
-export const useGroupStore = create<GroupStore>((set) => ({
-  currentGroupId: null,
-  setCurrentGroupId: (id) => set({ currentGroupId: id }),
-  isModalOpen: false,
-  setIsModalOpen: (open) => set({ isModalOpen: open }),
-}));
+export function ExpenseList({ expenses }: ExpenseListProps) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  return (
+    <ul>
+      {expenses.map((expense) => (
+        <li key={expense.id} onClick={() => setSelectedId(expense.id)}>
+          {expense.description} - ${expense.amount}
+        </li>
+      ))}
+    </ul>
+  );
+}
 ```
 
-### TanStack Query — Server State
-TanStack Query manages data fetched from Java backend:
-- Expense lists, group details, user balances
-- Caching, background refetch, stale-while-revalidate
-- Error boundaries and loading states
+---
 
-**Pattern:**
+## State Management
+
+### Server-Side State
+Data fetched in server components stays on server until explicitly sent:
+
 ```typescript
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { getExpenses, createExpense } from '@/api/expenseClient';
+// app/(dashboard)/groups/[id]/page.tsx
+async function GroupPage({ params }: { params: { id: string } }) {
+  const group = await getGroup(params.id);  // Server-side, never exposed to client
+  return <GroupDetail group={group} />;
+}
+```
 
-export const useExpensesQuery = (groupId: string) => {
-  return useQuery({
-    queryKey: ['expenses', groupId],
-    queryFn: () => getExpenses(groupId),
-    enabled: !!groupId,
-  });
-};
+### Client-Side State
+Use React `useState` for UI state only (modal visibility, selected item, form input):
 
-export const useCreateExpenseMutation = (groupId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (expense: Expense) => createExpense(groupId, expense),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses', groupId] });
-    },
-  });
-};
+```typescript
+// components/ExpenseForm.tsx ('use client')
+'use client';
+
+export function ExpenseForm({ groupId }: { groupId: string }) {
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await addExpense(groupId, { description, amount });
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input value={description} onChange={(e) => setDescription(e.target.value)} />
+      <input value={amount} onChange={(e) => setAmount(e.target.value)} />
+      <button type="submit">Add Expense</button>
+    </form>
+  );
+}
 ```
 
 ---
 
-## Single Codebase = Three Platforms
+## Server Actions & Mutations
 
-### Web (PWA)
-Expo Router generates routes in `app/` → deployed to Vercel/AWS as static bundle
-- `app/index.tsx` → `https://app.domain.com/`
-- `app/groups/[id].tsx` → `https://app.domain.com/groups/[id]`
+Server actions handle form submissions and mutations. Typed by TypeScript, no runtime serialization:
 
-### iOS
-Same routes, compiled to native iOS app for App Store
-- Navigation uses native stack (Expo Router links to native navigation)
-- Platform-specific code via `.ios.tsx` files
+```typescript
+// app/(dashboard)/groups/[id]/actions.ts ('use server')
+'use server';
 
-### Android
-Same routes, compiled to native Android app for Play Store
-- Navigation uses native stack
-- Platform-specific code via `.android.tsx` files
+import { apiClient } from '@/lib/api-client';
+import { handleResponseStructure } from '@/lib/response-handler';
 
-**Platform-specific files:**
-```
-app/
-├── index.tsx           (shared web + native)
-├── groups/
-│   ├── [id].tsx       (shared)
-│   └── [id].ios.tsx   (iOS-only overrides)
-│   └── [id].android.tsx (Android-only overrides)
+export async function addExpense(
+  groupId: string,
+  input: { description: string; amount: number }
+) {
+  const response = await apiClient.post(`/groups/${groupId}/expenses`, input);
+  return handleResponseStructure(response.data);
+}
 ```
 
-Expo Router automatically selects the correct file for each platform.
+Called from client components:
+
+```typescript
+// components/ExpenseForm.tsx ('use client')
+'use client';
+
+import { addExpense } from '@/app/(dashboard)/groups/[id]/actions';
+
+export function ExpenseForm({ groupId }: { groupId: string }) {
+  async function handleSubmit(e: React.FormEvent) {
+    await addExpense(groupId, { description, amount });
+  }
+  // ...
+}
+```
 
 ---
 
-## Data Flow Example: Loading Expenses
+## API Routes (Middleware to Backend)
 
-1. **User navigates to group** → Expo Router renders `app/groups/[id].tsx`
-2. **Component mounts** → calls `useExpensesQuery(groupId)` hook
-3. **TanStack Query** → checks cache, fetches if needed
-4. **Axios HTTP call** → POST to `GET /api/groups/{id}/expenses`
-5. **Java backend** → returns `ResponseStructure<Expense[]>`
-6. **Query hook** → caches result in TanStack Query
-7. **Component re-renders** with `data` from hook
-8. **User selects expense** → updates Zustand `selectedExpenseId`
-9. **Modal opens** → shows editing UI (also Zustand state)
-10. **User saves** → `useCreateExpenseMutation()` fires, invalidates query cache
-11. **Expenses list refetches** and re-renders
+API routes handle authentication, logging, and proxy calls to Java backend:
+
+```typescript
+// app/api/groups/route.ts (GET /api/groups)
+import { NextRequest, NextResponse } from 'next/server';
+import { apiClient } from '@/lib/api-client';
+
+export async function GET(request: NextRequest) {
+  try {
+    const token = request.cookies.get('auth-token')?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const response = await apiClient.get('/groups', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return NextResponse.json(response.data);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+```
+
+Token is stored in HTTP-only cookie (set by `/api/auth/login`), read by API routes.
+
+---
+
+## Data Flow Example: Loading Group with Expenses
+
+1. User navigates to `/groups/123`
+2. Next.js routes to `app/(dashboard)/groups/[id]/page.tsx` (server component)
+3. Server component calls `getGroup('123')` and `getExpenses('123')`
+4. Both functions use `apiClient` + auth token from server-side cookies
+5. Java backend returns `ResponseStructure<Group>` and `ResponseStructure<Expense[]>`
+6. Server component renders with fetched data + `<ExpenseList expenses={...} />`
+7. `<ExpenseList>` is a client component with `useState` for interaction
+8. User clicks "Add Expense" → client component calls server action
+9. Server action (`addExpense`) validates input, calls Java backend via API route
+10. API route forwards request with auth token, returns result
+11. Server action returns result; client re-fetches if needed (or uses form reset)
 
 ---
 
 ## HTTP Contract with Backend
 
-All responses follow Java backend `ResponseStructure<T>`:
+All responses follow Java backend `ResponseStructure<T>`. HTTP status is always 200 — check `responseStatus` to determine success or failure:
 
 ```typescript
 interface ResponseStructure<T> {
-  result: {
-    status: 'SUCCESS' | 'FAILURE';
-    message: string;
-  };
-  data: T;
+  responseStatus: 'SUCCESS' | 'FAILURE';
+  responseMessage: string;
+  responseObject: T | null;
 }
 ```
 
-Axios client always returns this shape:
+Helper for extracting data or throwing errors. Pass `response.data` (the Axios JSON body), not the raw Axios response:
 
 ```typescript
-// api/expenseClient.ts
-export const getExpenses = async (groupId: string): Promise<ResponseStructure<Expense[]>> => {
-  const response = await axios.get(`/api/groups/${groupId}/expenses`);
-  return response.data; // Already ResponseStructure<Expense[]>
-};
+// lib/response-handler.ts
+export function handleResponseStructure<T>(response: ResponseStructure<T>): T {
+  if (response.responseStatus === 'FAILURE') {
+    throw new Error(response.responseMessage);
+  }
+  return response.responseObject as T;
+}
 ```
 
 ---
 
-## Import Hooks Directly (No Context API)
+## Authentication Flow
 
-Components do NOT use Context API for dependency injection. They import hooks directly:
-
-```typescript
-// ✓ Correct
-import { useGroupStore } from '@/hooks/useGroupStore';
-import { useExpensesQuery } from '@/hooks/useExpensesQuery';
-
-export const ExpenseScreen = ({ groupId }) => {
-  const selectedId = useGroupStore((state) => state.selectedExpenseId);
-  const { data } = useExpensesQuery(groupId);
-  return <FlatList data={data} />;
-};
-```
-
-This avoids provider hell and makes testing easier (mock hooks directly).
+1. User submits login form (client component calls server action)
+2. Server action sends credentials to `/api/auth/login`
+3. API route calls Java backend, receives `ResponseStructure<LoginResponse>`
+4. API route sets HTTP-only cookie: `res.cookies.set('auth-token', token, { httpOnly: true })`
+5. Server actions and API routes access token via `request.cookies.get('auth-token')`
+6. Token never exposed to client JavaScript
 
 ---
 
 ## See Also
 
-- [`docs/architecture-deep-dives/component-structure.md`](docs/architecture-deep-dives/component-structure.md) — where components live, how app/ directory maps to routes
-- [`docs/architecture-deep-dives/state-management.md`](docs/architecture-deep-dives/state-management.md) — Zustand + TanStack Query patterns, anti-patterns
-- [`docs/architecture-deep-dives/api-integration.md`](docs/architecture-deep-dives/api-integration.md) — HTTP client, error handling, typing ResponseStructure<T>
+- [`docs/architecture-deep-dives/server-components.md`](docs/architecture-deep-dives/server-components.md) — when to use server components
+- [`docs/architecture-deep-dives/server-actions.md`](docs/architecture-deep-dives/server-actions.md) — form submissions and mutations
+- [`docs/architecture-deep-dives/api-routes.md`](docs/architecture-deep-dives/api-routes.md) — API route patterns and middleware
+- [`docs/architecture-deep-dives/state-management.md`](docs/architecture-deep-dives/state-management.md) — client-side state with React hooks
+- [`docs/architecture-deep-dives/data-fetching.md`](docs/architecture-deep-dives/data-fetching.md) — server vs. client fetching strategies
+- [`docs/architecture-deep-dives/authentication.md`](docs/architecture-deep-dives/authentication.md) — auth with HTTP-only cookies

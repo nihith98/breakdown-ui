@@ -1,6 +1,6 @@
 # Design Tokens Reference
 
-This document contains all design tokens used by Breakdown, formatted as a Unistyles-compatible tokens object. Copy-paste directly into your theme configuration.
+This document contains all design tokens used by Breakdown. Import from `@/theme/tokens` in component files and CSS Modules.
 
 ## Tokens Object
 
@@ -97,29 +97,68 @@ export const tokens = {
 
 ## Usage in Components
 
-### Colors
-
-Use colors for backgrounds, text, borders, and semantic states:
+### Colors — TypeScript (inline styles or CSS Modules)
 
 ```typescript
 import { tokens } from '@/theme/tokens';
 
-// Text
-<Text style={{ color: tokens.colors.ink }}>Primary text</Text>
-<Text style={{ color: tokens.colors.inkMuted }}>Secondary text</Text>
+// Inline styles (for dynamic/conditional coloring)
+<p style={{ color: tokens.colors.ink }}>Primary text</p>
+<p style={{ color: tokens.colors.inkMuted }}>Secondary text</p>
 
-// Backgrounds
-<View style={{ backgroundColor: tokens.colors.surface }}>
-  <Card style={{ backgroundColor: tokens.colors.surfaceRaised }} />
-</View>
+// Dynamic sentiment coloring
+const sentimentColor = isPositive ? tokens.colors.pine : tokens.colors.brick;
+<span style={{ color: sentimentColor }}>{amount}</span>
+```
 
-// Sentiment indicators
-<View style={{ backgroundColor: tokens.colors.amberLight }}>
-  Positive amount
-</View>
-<View style={{ backgroundColor: tokens.colors.brickLight }}>
-  Negative amount
-</View>
+### Colors — CSS Modules (preferred for static styles)
+
+In CSS Modules, reference the hex values directly from the tokens file:
+
+```css
+/* components/TransactionRow.module.css */
+.root {
+  background-color: #FAF8F2;  /* tokens.colors.surface */
+  border: 1px solid #D8D1C5;  /* tokens.colors.border */
+}
+
+.amount-positive { color: #3A6B4D; }  /* tokens.colors.pine */
+.amount-negative { color: #B05248; }  /* tokens.colors.brick */
+```
+
+To keep CSS Modules and tokens in sync, define CSS custom properties in a global stylesheet:
+
+```css
+/* app/globals.css */
+:root {
+  --color-canvas: #EFE9DA;
+  --color-surface: #FAF8F2;
+  --color-surface-raised: #FFFFFF;
+  --color-ink: #1B1916;
+  --color-ink-muted: #7A7066;
+  --color-ink-faint: #B5AFA5;
+  --color-amber: #C27B28;
+  --color-amber-light: #F4E8D0;
+  --color-pine: #3A6B4D;
+  --color-pine-light: #DFF0E5;
+  --color-brick: #B05248;
+  --color-brick-light: #F5E5E3;
+  --color-border: #D8D1C5;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
+```
+
+Then reference in CSS Modules:
+```css
+.card {
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-md);
+}
 ```
 
 ### Spacing
@@ -127,80 +166,96 @@ import { tokens } from '@/theme/tokens';
 Use spacing values consistently for padding, margins, and gaps:
 
 ```typescript
-// Padding
-<View style={{ padding: tokens.spacing.md }}>
-  <Text>Padded content</Text>
-</View>
+import { tokens } from '@/theme/tokens';
 
-// Gap in flex layout
-<View style={{ gap: tokens.spacing.sm }}>
-  <Button />
-  <Button />
-</View>
+// Inline styles
+<div style={{ padding: tokens.spacing.md }}>
+  <p>Padded content</p>
+</div>
 
-// Margins
-<View style={{ marginBottom: tokens.spacing.lg }}>
-  Section
-</View>
+<div style={{ display: 'flex', gap: tokens.spacing.sm }}>
+  <button>Action 1</button>
+  <button>Action 2</button>
+</div>
+```
+
+Or in CSS Modules using the custom properties:
+```css
+.section {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
 ```
 
 ### Typography
 
-Apply fonts using the typography tokens:
+Apply fonts using the typography tokens. Fonts are loaded in `app/layout.tsx` via `next/font`:
 
 ```typescript
-// Display heading
-<Text style={{ fontFamily: tokens.typography.displayBold, fontSize: 28 }}>
+import { tokens } from '@/theme/tokens';
+
+// Inline styles for dynamic typography
+<h1 style={{ fontFamily: tokens.typography.displayBold, fontSize: '28px' }}>
   Breakdown
-</Text>
+</h1>
 
-// Body text
-<Text style={{ fontFamily: tokens.typography.body, fontSize: 16 }}>
+<p style={{ fontFamily: tokens.typography.body, fontSize: '16px' }}>
   Regular paragraph
-</Text>
+</p>
 
-// Amount display (monospace for alignment)
-<Text style={{ fontFamily: tokens.typography.monoMedium, fontSize: 20 }}>
+// Amount display (monospace for decimal alignment)
+<span style={{ fontFamily: tokens.typography.mono, fontSize: '20px' }}>
   $42.50
-</Text>
+</span>
+```
+
+In CSS Modules:
+```css
+.heading {
+  font-family: 'SpaceGrotesk-SemiBold', sans-serif;
+  font-size: 1.75rem;
+}
+
+.amount {
+  font-family: 'IBMPlexMono-Medium', monospace;
+  text-align: right;
+}
 ```
 
 ### Border Radius
 
-Apply consistent corner radius:
-
 ```typescript
-// Cards and containers
-<View style={{ borderRadius: tokens.borderRadius.lg }}>
-  <Card />
-</View>
+import { tokens } from '@/theme/tokens';
 
-// Buttons
-<Pressable style={{ borderRadius: tokens.borderRadius.md }}>
-  <Text>Press me</Text>
-</Pressable>
+// Inline
+<div style={{ borderRadius: tokens.borderRadius.lg }}>Card</div>
+<button style={{ borderRadius: tokens.borderRadius.md }}>Button</button>
 ```
 
 ### Animations
 
-Use animation durations with easeOut timing:
+Use animation durations with CSS `transition` or `animation` properties:
 
+```css
+/* easeOut transitions */
+.button {
+  transition: background-color 80ms ease-out;   /* xs: quick feedback */
+}
+
+.modal {
+  transition: opacity 130ms ease-out;           /* sm: standard */
+}
+
+.toast {
+  animation: slideIn 180ms ease-out forwards;  /* md: longer */
+}
+```
+
+When you need JS-driven animation:
 ```typescript
-import { Animated } from 'react-native';
+import { tokens } from '@/theme/tokens';
 
-// Fade transition
-Animated.timing(fadeAnim, {
-  toValue: 1,
-  duration: tokens.animation.durations.sm, // 130ms
-  useNativeDriver: true,
-}).start();
-
-// Slide transition
-Animated.timing(slideAnim, {
-  toValue: 0,
-  duration: tokens.animation.durations.md, // 180ms
-  useNativeDriver: true,
-}).start();
+element.style.transition = `opacity ${tokens.animation.durations.sm}ms ease-out`;
 ```
 
 ## Color Semantics
@@ -242,6 +297,6 @@ All layout padding and margins should use these values, never magic numbers.
 - **Duration md (180ms):** Longer animations (toast notifications, modal appear)
 - All animations use `easeOut` timing function
 - No springs, bounces, or elastic effects
-- Use native driver when possible for performance
+- Prefer CSS `transition` / `animation` over JavaScript-driven animation
 
 These tokens ensure visual consistency across the Breakdown app and provide a framework for building new features.

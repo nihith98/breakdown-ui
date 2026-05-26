@@ -1,394 +1,266 @@
-# Adding a Screen
+# Adding a Page (Next.js App Router)
 
-Screens are the primary UI containers in Breakdown. Each screen corresponds to a route file in the `app/` directory and integrates queries, stores, components, and error handling. This guide covers the scaffolding checklist and shows a complete, production-ready example.
+Pages in Breakdown are server components by default. They fetch data on the server and render HTML — no client-side loading spinners, no waterfall requests. This guide covers the scaffolding checklist and shows a complete production-ready example.
 
-## Screen Scaffolding Checklist
+## Page Scaffolding Checklist
 
-### 1. Create Route File
+### 1. Create the Route File
 
-Create a new file in the appropriate directory under `app/(app)/` following this structure:
+Create a `page.tsx` in the appropriate directory under `app/`:
 
 ```
-app/(app)/group/[groupId]/transactions.tsx
-                          ^^^^^^^^^^^^^^
-                          file name matches route
+app/(dashboard)/groups/[id]/transactions/page.tsx
+                             ^^^^^^^^^^^
+                             dynamic segment
 ```
 
-The filename becomes the route path. Use `[bracketed]` names for dynamic parameters.
+The directory path maps to the URL. Route groups in parentheses (e.g. `(dashboard)`) do not appear in the URL.
 
-### 2. Import Queries and Stores
+### 2. Make It a Server Component (Default)
 
-Place all data dependencies at the top of the file:
+No directive needed — all files in `app/` are server components unless you add `'use client'`. Fetch data directly in the component using `async/await`:
 
 ```typescript
-import { useTransactionList, useInsertTransaction } from '@/queries/transactionQueries'
-import { useAuthStore } from '@/stores/authStore'
-```
+// app/(dashboard)/groups/[id]/transactions/page.tsx
 
-### 3. Define Screen Component with Hooks at Top Level
+import { getTransactions } from '@/lib/transaction-service';
+import { TransactionList } from '@/components/TransactionList';
+import { AddTransactionForm } from '@/components/AddTransactionForm';
 
-Hooks must be called at the top level of the component—never inside callbacks, conditionals, or nested functions:
+export default async function TransactionsPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const transactions = await getTransactions(params.id);
 
-```typescript
-export default function TransactionListScreen() {
-  // Hooks at top level
-  const { groupId } = useLocalSearchParams()
-  const { data: transactions, isLoading, error } = useTransactionList(groupId)
-  const { accessToken } = useAuthStore()
-  
-  // Component logic below...
-}
-```
-
-### 4. Handle Loading and Error States
-
-Provide visual feedback for both states:
-
-```typescript
-if (isLoading && !transactions) {
-  return <LoadingPlaceholder />
-}
-
-if (error) {
   return (
-    <ErrorState
-      title="Failed to load transactions"
-      onRetry={() => refetch()}
-    />
-  )
+    <div>
+      <h1>Transactions</h1>
+      <TransactionList transactions={transactions} />
+      <AddTransactionForm groupId={params.id} />
+    </div>
+  );
 }
 ```
 
-### 5. Render UI with Design System Components
+### 3. Add a Loading State
 
-Use components from `@/components/ui/`:
-
-```typescript
-return (
-  <Container>
-    <Header title="Transactions" />
-    <TransactionList transactions={transactions} />
-  </Container>
-)
-```
-
-### 6. Wrap in Error Boundary
-
-Protect against unexpected errors:
+Create `loading.tsx` in the same directory — Next.js shows it automatically while the page is streaming:
 
 ```typescript
-<ErrorBoundary>
-  <TransactionListScreen />
-</ErrorBoundary>
-```
+// app/(dashboard)/groups/[id]/transactions/loading.tsx
 
-## Connecting Mutations
-
-Form submissions trigger mutations, which invalidate cache and show feedback:
-
-```typescript
-const { mutate: insertTransaction, isPending } = useInsertTransaction()
-
-const handleAddTransaction = async (formData) => {
-  insertTransaction(formData, {
-    onSuccess: () => {
-      showToast('Transaction added', 'success')
-      resetForm()
-    },
-    onError: (error) => {
-      showToast(error.message, 'error')
-    },
-  })
-}
-```
-
-## Deep Linking and Route Parameters
-
-Use `useLocalSearchParams()` to access route parameters:
-
-```typescript
-const { groupId } = useLocalSearchParams<{ groupId: string }>()
-
-// Pass to queries
-const { data } = useTransactionList(groupId)
-```
-
-Parameters from the URL are automatically available and type-safe.
-
-## Complete Production Example: TransactionListScreen
-
-This is a realistic, fully-functional screen showing all patterns:
-
-```typescript
-// app/(app)/group/[groupId]/transactions.tsx
-
-import { useLocalSearchParams } from 'expo-router'
-import { ScrollView, View } from 'react-native'
-import { useState } from 'react'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-
-// Queries
-import {
-  useTransactionList,
-  useDeleteTransaction,
-} from '@/queries/transactionQueries'
-
-// Stores
-import { useAuthStore } from '@/stores/authStore'
-
-// Components
-import {
-  Container,
-  Header,
-  Button,
-  ActivityIndicator,
-  Text,
-  ErrorBox,
-} from '@/components/ui'
-import { TransactionCard } from '@/components/TransactionCard'
-import { CreateTransactionModal } from '@/components/CreateTransactionModal'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
-
-// Utilities
-import { useToast } from '@/hooks/useToast'
-import { createStyleSheet, useStyles } from '@/design/unistyles'
-
-/**
- * TransactionListScreen displays all transactions for a group
- * - Fetches data from API via useTransactionList query
- * - Handles loading, error, and empty states
- * - Allows adding and deleting transactions
- * - Shows transaction details with amounts and dates
- */
-export default function TransactionListScreen() {
-  // Route parameters
-  const { groupId } = useLocalSearchParams<{ groupId: string }>()
-  const insets = useSafeAreaInsets()
-
-  // Stores
-  const { accessToken } = useAuthStore()
-
-  // Queries
-  const {
-    data: transactions,
-    isLoading,
-    error,
-    refetch,
-    isFetching,
-  } = useTransactionList(groupId)
-
-  const {
-    mutate: deleteTransaction,
-    isPending: isDeleting,
-  } = useDeleteTransaction()
-
-  // Local state
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const { showToast } = useToast()
-  const { styles } = useStyles(stylesheet)
-
-  // Validate required parameters
-  if (!groupId || !accessToken) {
-    return (
-      <ErrorBoundary>
-        <Container>
-          <ErrorBox
-            title="Invalid session"
-            message="Unable to load transactions. Please log in again."
-          />
-        </Container>
-      </ErrorBoundary>
-    )
-  }
-
-  // Loading state: show spinner while fetching initial data
-  if (isLoading && !transactions) {
-    return (
-      <Container>
-        <Header title="Transactions" />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" />
-          <Text variant="body" style={styles.loadingText}>
-            Loading transactions...
-          </Text>
-        </View>
-      </Container>
-    )
-  }
-
-  // Error state: show error with retry option
-  if (error) {
-    return (
-      <ErrorBoundary>
-        <Container>
-          <Header title="Transactions" />
-          <View style={styles.errorContainer}>
-            <ErrorBox
-              title="Failed to load transactions"
-              message={error.message}
-              actionLabel="Retry"
-              onAction={() => refetch()}
-            />
-          </View>
-        </Container>
-      </ErrorBoundary>
-    )
-  }
-
-  // Empty state: no transactions yet
-  if (!transactions || transactions.length === 0) {
-    return (
-      <Container>
-        <Header title="Transactions" />
-        <View style={styles.emptyStateContainer}>
-          <Text variant="heading3" style={styles.emptyStateTitle}>
-            No transactions yet
-          </Text>
-          <Text variant="body" style={styles.emptyStateMessage}>
-            Add your first transaction to get started tracking expenses
-          </Text>
-          <Button
-            label="Add Transaction"
-            onPress={() => setIsCreateModalOpen(true)}
-            style={styles.emptyStateButton}
-          />
-        </View>
-      </Container>
-    )
-  }
-
-  // Handle delete action
-  const handleDeleteTransaction = (transactionId: string) => {
-    deleteTransaction(
-      { transactionId, groupId },
-      {
-        onSuccess: () => {
-          showToast('Transaction deleted', 'success')
-        },
-        onError: (error) => {
-          showToast(error.message || 'Failed to delete transaction', 'error')
-        },
-      }
-    )
-  }
-
-  // Successful render: transaction list with add button
+export default function Loading() {
   return (
-    <ErrorBoundary>
-      <Container paddingBottom={insets.bottom}>
-        <Header
-          title="Transactions"
-          action={{
-            label: 'Add',
-            onPress: () => setIsCreateModalOpen(true),
-          }}
-        />
+    <div>
+      <p>Loading transactions...</p>
+    </div>
+  );
+}
+```
 
-        {/* Refetch indicator for background updates */}
-        {isFetching && !isLoading && (
-          <View style={styles.refetchingIndicator}>
-            <Text variant="caption">Updating...</Text>
-          </View>
-        )}
+### 4. Add an Error Boundary
 
-        {/* Transaction list */}
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.transactionList}>
-            {transactions.map((transaction) => (
-              <TransactionCard
-                key={transaction.id}
-                transaction={transaction}
-                onDelete={() => handleDeleteTransaction(transaction.id)}
-                isDeleting={isDeleting}
-              />
-            ))}
-          </View>
-        </ScrollView>
+Create `error.tsx` in the same directory — must be a `'use client'` component:
 
-        {/* Create transaction modal */}
-        <CreateTransactionModal
-          groupId={groupId}
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={() => {
-            setIsCreateModalOpen(false)
-            showToast('Transaction added', 'success')
-          }}
-        />
-      </Container>
-    </ErrorBoundary>
-  )
+```typescript
+// app/(dashboard)/groups/[id]/transactions/error.tsx
+'use client';
+
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error;
+  reset: () => void;
+}) {
+  return (
+    <div>
+      <p>Failed to load transactions: {error.message}</p>
+      <button onClick={reset}>Retry</button>
+    </div>
+  );
+}
+```
+
+### 5. Extract Interactivity into Client Components
+
+Forms, buttons, and anything using hooks go in `components/` with `'use client'`:
+
+```typescript
+// components/AddTransactionForm.tsx
+'use client';
+
+import { useState } from 'react';
+import { addTransaction } from '@/app/(dashboard)/groups/[id]/actions';
+
+export function AddTransactionForm({ groupId }: { groupId: string }) {
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await addTransaction(groupId, { description, amount });
+      setDescription('');
+      setAmount('');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="Description"
+        required
+      />
+      <input
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        type="number"
+        step="0.01"
+        placeholder="0.00"
+        required
+      />
+      <button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Adding...' : 'Add Transaction'}
+      </button>
+    </form>
+  );
+}
+```
+
+### 6. Create Server Actions for Mutations
+
+Put mutations in `actions.ts` in the same route directory:
+
+```typescript
+// app/(dashboard)/groups/[id]/actions.ts
+'use server';
+
+import { cookies } from 'next/headers';
+import { apiClient } from '@/lib/api-client';
+import { handleResponseStructure } from '@/lib/response-handler';
+import { revalidatePath } from 'next/cache';
+
+export async function addTransaction(
+  groupId: string,
+  input: { description: string; amount: string }
+) {
+  const cookieStore = cookies();
+  const token = cookieStore.get('auth-token')?.value;
+  if (!token) throw new Error('Unauthorized');
+
+  const response = await apiClient.post(
+    `/group/${groupId}/insert-transaction`,
+    { ...input, payerId: 'current-user-id', category: 'other' },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  handleResponseStructure(response.data);
+  revalidatePath(`/groups/${groupId}/transactions`);
+}
+```
+
+`revalidatePath` causes Next.js to re-fetch the page data on the next visit, keeping the list fresh after mutations.
+
+### 7. Write Tests
+
+```typescript
+// __tests__/app/(dashboard)/groups/[id]/transactions/page.test.tsx
+import { render, screen } from '@testing-library/react';
+import TransactionsPage from '@/app/(dashboard)/groups/[id]/transactions/page';
+import * as transactionService from '@/lib/transaction-service';
+
+jest.mock('@/lib/transaction-service');
+
+describe('TransactionsPage_withTransactions_rendersList', () => {
+  it('should render transactions', async () => {
+    (transactionService.getTransactions as jest.Mock).mockResolvedValue([
+      { id: 'txn-1', description: 'Dinner', amount: '50.00', payerId: 'user-1' },
+    ]);
+
+    const component = await TransactionsPage({ params: { id: 'group-1' } });
+    render(component);
+
+    expect(screen.getByText('Dinner')).toBeInTheDocument();
+  });
+});
+```
+
+---
+
+## Complete Production Example: TransactionsPage
+
+```typescript
+// app/(dashboard)/groups/[id]/transactions/page.tsx
+
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { apiClient } from '@/lib/api-client';
+import { handleResponseStructure } from '@/lib/response-handler';
+import { TransactionList } from '@/components/TransactionList';
+import { AddTransactionForm } from '@/components/AddTransactionForm';
+import type { Transaction } from '@/types';
+
+async function getTransactions(groupId: string): Promise<Transaction[]> {
+  const cookieStore = cookies();
+  const token = cookieStore.get('auth-token')?.value;
+
+  if (!token) {
+    redirect('/login');
+  }
+
+  const response = await apiClient.get(`/group/${groupId}/transaction-list`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return handleResponseStructure<Transaction[]>(response.data);
 }
 
-// Styles using Unistyles
-const stylesheet = createStyleSheet((theme) => ({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-  },
-  loadingText: {
-    marginTop: theme.spacing.md,
-    color: theme.colors.textSecondary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: theme.spacing.md,
-  },
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-  },
-  emptyStateTitle: {
-    marginBottom: theme.spacing.sm,
-    textAlign: 'center',
-  },
-  emptyStateMessage: {
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: theme.spacing.lg,
-  },
-  emptyStateButton: {
-    width: '100%',
-  },
-  refetchingIndicator: {
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    backgroundColor: theme.colors.backgroundSecondary,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  transactionList: {
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
-}))
+export default async function TransactionsPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const transactions = await getTransactions(params.id);
+
+  return (
+    <div>
+      <h1>Transactions</h1>
+
+      {transactions.length === 0 ? (
+        <p>No transactions yet. Add the first one below.</p>
+      ) : (
+        <TransactionList transactions={transactions} />
+      )}
+
+      <AddTransactionForm groupId={params.id} />
+    </div>
+  );
+}
 ```
+
+---
 
 ## Key Patterns Explained
 
-**1. Hook Placement**: All hooks (useLocalSearchParams, useQuery, useStore) are called at the top level, before any conditions or returns.
+**1. Server component = async function.** You can `await` data directly in the component body. No `useEffect`, no `useState` for data.
 
-**2. Error Boundary**: Wraps the component to catch unexpected errors and show a fallback UI instead of crashing.
+**2. Redirect on missing auth.** Call `redirect('/login')` from the server — before any rendering happens.
 
-**3. Loading States**: Show spinner during initial fetch, don't show during background refetches.
+**3. `loading.tsx` for streaming.** Next.js automatically uses this as a Suspense fallback while your async component resolves.
 
-**4. Empty State**: Clear message when no data, with action to create first item.
+**4. `error.tsx` must be `'use client'`.** It receives an `error` object and a `reset` callback. Keep it simple.
 
-**5. Mutation Integration**: Delete mutation includes success/error toasts and disables UI during request.
+**5. `revalidatePath` after mutations.** Calling this in a server action tells Next.js to invalidate the cached page, so the next request gets fresh data.
 
-**6. Route Parameters**: `useLocalSearchParams()` pulls `groupId` from URL, passed to queries for data fetching.
+**6. Client components receive data as props.** Server components fetch, client components display and interact. Never fetch in client components.
 
-**7. Styling**: Uses `createStyleSheet` and `useStyles()` hook for theme-aware styling.
-
-**8. Accessibility**: Proper button labels, loading states, and error messages for screen readers.
-
-This pattern scales to any screen—replace `TransactionList` with `SettlementList`, `useTransactionList` with `useSettlements`, etc.
+This pattern scales to any page — replace `getTransactions` with the appropriate service function and `TransactionList` with the right display component.

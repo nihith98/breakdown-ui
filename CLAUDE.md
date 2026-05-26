@@ -1,133 +1,116 @@
-# breakDown-ui — Frontend Coding Conventions
+# breakDown-ui — Frontend Coding Conventions (Next.js)
 
 ## See Also
 
-- [`architecture.md`](architecture.md) — system architecture, state management layers, platform differences
-- [`unit-tests.md`](unit-tests.md) — testing strategy, Jest + React Native Testing Library patterns
-- [`deployment.md`](deployment.md) — build pipelines, platform-specific deployment steps
+- [`architecture.md`](architecture.md) — system architecture, server/client components, data flow
+- [`unit-tests.md`](unit-tests.md) — testing strategy, Jest + React Testing Library patterns
+- [`deployment.md`](deployment.md) — deployment to Vercel, AWS, GCP
 - [`docs/implementation-guides/`](docs/implementation-guides/) — step-by-step guides for adding features
-- [`docs/architecture-deep-dives/`](docs/architecture-deep-dives/) — deep dives on component structure, state management, API integration
+- [`docs/architecture-deep-dives/`](docs/architecture-deep-dives/) — deep dives on server components, server actions, API routes
+
+---
+
+## Platform
+
+**Web + PWA only.** Built with Next.js 15, React 19, TypeScript.
 
 ---
 
 ## Hard Rules — Never Violate
 
-- **No Lombok, Redux, or custom state management beyond Zustand + TanStack Query** — Period.
-- **No Context API** — import hooks directly from Zustand stores or custom hook files.
-- **Strict TypeScript: true** — all code must be fully typed. No `any` without explicit `@ts-ignore` comment.
-- **All responses typed via `ResponseStructure<T>`** — Java backend contract must be respected in all HTTP responses.
-- **No feature flags unless backend supports them** — configuration comes from environment variables only.
+- **Server components by default** — use `'use client'` directive only when client-side interactivity is needed
+- **Server actions for mutations** — use `'use server'` for form submissions, POST/PUT/DELETE operations
+- **API routes as middleware** — all data fetching goes through `app/api/` routes to the Java backend
+- **Strict TypeScript: true** — all code must be fully typed. No `any` without explicit `@ts-ignore` comment
+- **All responses typed via `ResponseStructure<T>`** — Java backend contract must be respected
+- **No Context API or custom state management** — use `useState` + server actions for forms, server components for data
+- **No feature flags in frontend** — configuration comes from environment variables only
 
 ---
 
-## Component Naming & File Structure
+## File Structure & Naming
 
-### PascalCase for Components
+### Pages (Server Components)
 ```typescript
-// ✓ Correct
-export const LoginScreen = () => { ... }
-export const UserAvatar = () => { ... }
-export const GroupModal = () => { ... }
+// ✓ Correct — app/(dashboard)/groups/[id]/page.tsx
+import { getGroup } from '@/lib/group-service';
 
-// ✗ Wrong
-export const loginScreen = () => { ... }
-export const userAvatar = () => { ... }
+export default async function GroupPage({ params }: { params: { id: string } }) {
+  const group = await getGroup(params.id);
+  return <div>{group.name}</div>;
+}
+
+// ✗ Wrong — client component for data fetching
+'use client';
+import { useEffect, useState } from 'react';
+export default function GroupPage({ params }) {
+  const [group, setGroup] = useState(null);
+  useEffect(() => { /* fetch */ }, []);
+}
 ```
 
-### camelCase for Hooks
-```typescript
-// ✓ Correct
-export const useGroupStore = () => { ... }
-export const useExpensesQuery = () => { ... }
-export const useDateFormatter = () => { ... }
-
-// ✗ Wrong
-export const UseGroupStore = () => { ... }
-export const GetExpenses = () => { ... }
-```
-
-### Mirror Production Structure in Tests
-```
-app/
-├── screens/
-│   ├── LoginScreen.tsx
-│   └── GroupScreen.tsx
-├── components/
-│   ├── ExpenseList.tsx
-│   └── UserAvatar.tsx
-└── hooks/
-    ├── useGroupStore.ts
-    └── useExpensesQuery.ts
-
-tests/
-├── screens/
-│   ├── LoginScreen.test.tsx
-│   └── GroupScreen.test.tsx
-├── components/
-│   ├── ExpenseList.test.tsx
-│   └── UserAvatar.test.tsx
-└── hooks/
-    ├── useGroupStore.test.ts
-    └── useExpensesQuery.test.ts
-```
-
----
-
-## Dependency Injection: Import Hooks Directly
-
-Do NOT use React Context API. Import custom hooks and Zustand stores directly.
+### Client Components
+All interactive UI uses client components:
 
 ```typescript
-// ✓ Correct: Direct import
-import { useGroupStore } from '@/hooks/useGroupStore';
-import { useExpensesQuery } from '@/hooks/useExpensesQuery';
+// ✓ Correct — app/components/AddExpenseForm.tsx
+'use client';
 
-export const GroupScreen = () => {
-  const groupId = useGroupStore((state) => state.currentGroupId);
-  const { data } = useExpensesQuery(groupId);
-  return <View>...</View>;
-};
+import { useState } from 'react';
+import { addExpense } from '@/app/(dashboard)/groups/[id]/actions';
 
-// ✗ Wrong: Context API
-const GroupContext = React.createContext(null);
-export const GroupProvider = ({ children }) => <GroupContext.Provider>...</GroupContext.Provider>;
-export const useGroup = () => useContext(GroupContext);
+export function AddExpenseForm({ groupId }: { groupId: string }) {
+  const [description, setDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await addExpense(groupId, { description });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return <form onSubmit={handleSubmit}>...</form>;
+}
 ```
 
----
-
-## Styling
-
-### Tokens via react-native-unistyles
-All semantic colors, fonts, spacing use unistyles tokens:
+### Server Actions
+Form submissions and mutations use server actions:
 
 ```typescript
-import { StyleSheet, useStyles } from 'react-native-unistyles';
+// ✓ Correct — app/(dashboard)/groups/[id]/actions.ts
+'use server';
 
-const stylesheet = createStyleSheet((theme) => ({
-  container: {
-    backgroundColor: theme.colors.background,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-  },
-  text: {
-    fontSize: theme.fonts.sizes.body,
-    color: theme.colors.text,
-    fontFamily: theme.fonts.family.regular,
-  },
-}));
+import { apiClient } from '@/lib/api-client';
+import { handleResponseStructure } from '@/lib/response-handler';
 
-export const MyComponent = () => {
-  const { styles } = useStyles(stylesheet);
-  return <View style={styles.container}><Text style={styles.text}>Hello</Text></View>;
-};
+export async function addExpense(
+  groupId: string,
+  input: { description: string }
+) {
+  const response = await apiClient.post(`/groups/${groupId}/expenses`, input);
+  return handleResponseStructure(response).data;
+}
 ```
 
-### Inline Styles for Overrides Only
-Component-specific overrides go inline as a last resort:
+### API Routes
+Middleware to Java backend:
 
 ```typescript
-<View style={[styles.container, { paddingHorizontal: 8 }]} />
+// ✓ Correct — app/api/groups/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { apiClient } from '@/lib/api-client';
+
+export async function GET(request: NextRequest) {
+  const token = request.cookies.get('auth-token')?.value;
+  const response = await apiClient.get('/groups', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return NextResponse.json(response.data);
+}
 ```
 
 ---
@@ -138,20 +121,28 @@ Component-specific overrides go inline as a last resort:
 All files must pass `tsconfig.json` with `"strict": true`. No implicit `any`.
 
 ### Response Typing
-```typescript
-import { ResponseStructure } from '@/types/ResponseStructure';
 
-interface ExpenseListResponse {
+The backend always returns HTTP 200. Check `responseStatus` to determine success or failure. The `responseObject` field contains the actual payload on success (null on failure).
+
+```typescript
+import { ResponseStructure, handleResponseStructure } from '@/lib/response-handler';
+
+interface Group {
   id: string;
-  amount: number;
-  description: string;
+  name: string;
 }
 
-const { data, isLoading, error } = useExpensesQuery<ResponseStructure<ExpenseListResponse[]>>(groupId);
+// In API routes: parse response.data (the JSON body from Axios)
+async function getGroup(id: string): Promise<Group> {
+  const axiosResponse = await apiClient.get(`/groups/${id}`);
+  return handleResponseStructure<Group>(axiosResponse.data);
+}
 
-if (error) {
-  const status = error.data?.result?.status; // "SUCCESS" | "FAILURE"
-  const message = error.data?.result?.message;
+// In server components: call API route, then parse
+async function getGroupFromRoute(id: string): Promise<Group> {
+  const response = await fetch(`/api/groups/${id}`);
+  const data: Group = await response.json(); // API route already unwraps responseObject
+  return data;
 }
 ```
 
@@ -159,77 +150,76 @@ if (error) {
 
 ## Testing Strategy
 
-### Framework: Jest + React Native Testing Library
+### Framework: Jest + React Testing Library
 
-All tests use Jest and React Native Testing Library. No snapshots unless the component layout is immutable (e.g., a static header).
+All tests use Jest and React Testing Library (NOT React Native Testing Library).
+
+### Server Action Tests
+```typescript
+// __tests__/app/groups/[id]/actions.test.ts
+import { addExpense } from '@/app/(dashboard)/groups/[id]/actions';
+import * as apiClient from '@/lib/api-client';
+
+jest.mock('@/lib/api-client');
+
+describe('addExpense_validInput_createsExpense', () => {
+  it('should create expense via API', async () => {
+    (apiClient.default.post as jest.Mock).mockResolvedValue({
+      data: {
+        responseStatus: 'SUCCESS' as const,
+        responseMessage: 'Created',
+        responseObject: { id: 'exp-1' },
+      },
+    });
+
+    const result = await addExpense('group-123', { description: 'Dinner' });
+    expect(result).toEqual({ id: 'exp-1' }); // handleResponseStructure returns responseObject
+  });
+});
+```
 
 ### Component Tests
 ```typescript
-// components/ExpenseList.test.tsx
-import { render, screen } from '@testing-library/react-native';
-import { ExpenseList } from './ExpenseList';
+// __tests__/components/ExpenseList.test.tsx
+import { render, screen } from '@testing-library/react';
+import { ExpenseList } from '@/components/ExpenseList';
 
-describe('ExpenseList_rendering_showsExpenses', () => {
+describe('ExpenseList_withExpenses_rendersExpenses', () => {
   it('should render list items', () => {
     const expenses = [{ id: '1', amount: 100, description: 'Dinner' }];
     render(<ExpenseList expenses={expenses} />);
-    expect(screen.getByText('Dinner')).toBeTruthy();
+    expect(screen.getByText('Dinner')).toBeInTheDocument();
   });
 });
 ```
 
-### Store Tests
+### API Route Tests
 ```typescript
-// hooks/useGroupStore.test.ts
-import { useGroupStore } from './useGroupStore';
-import { renderHook, act } from '@testing-library/react-native';
+// __tests__/app/api/groups/route.test.ts
+import { GET } from '@/app/api/groups/route';
+import { NextRequest } from 'next/server';
 
-describe('useGroupStore_setCurrentGroup_updatesState', () => {
-  it('should update current group ID', () => {
-    const { result } = renderHook(() => useGroupStore());
-    act(() => {
-      result.current.setCurrentGroupId('group-123');
-    });
-    expect(result.current.currentGroupId).toBe('group-123');
-  });
-});
-```
-
-### Query Hook Tests (Mocking API)
-```typescript
-// hooks/useExpensesQuery.test.ts
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { useExpensesQuery } from './useExpensesQuery';
-
-jest.mock('@/api/expenseClient');
-import { getExpenses } from '@/api/expenseClient';
-
-describe('useExpensesQuery_validGroupId_returnsExpenses', () => {
-  it('should fetch and return expenses', async () => {
-    (getExpenses as jest.Mock).mockResolvedValue({
-      result: { status: 'SUCCESS' },
-      data: [{ id: '1', amount: 100 }],
-    });
-
-    const { result } = renderHook(() => useExpensesQuery('group-123'));
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.data).toHaveLength(1);
+describe('GET_/api/groups_returnsGroupList', () => {
+  it('should return groups from backend', async () => {
+    const request = new NextRequest('http://localhost:3000/api/groups');
+    const response = await GET(request);
+    expect(response.status).toBe(200);
   });
 });
 ```
 
 ### Test Naming Convention
-Use the pattern: **componentName_scenario_expectedOutcome**
+Use the pattern: **routeOrFunction_condition_expectedOutcome**
 
 ```typescript
 // ✓ Correct
-describe('LoginScreen_emptyPassword_showsError', () => { ... });
+describe('addExpense_validInput_createsExpense', () => { ... });
 describe('ExpenseList_noItems_showsEmptyState', () => { ... });
-describe('useGroupStore_setCurrentGroup_updatesState', () => { ... });
+describe('GET_/api/groups_returnsGroupList', () => { ... });
 
 // ✗ Wrong
-describe('LoginScreen', () => { ... });
-describe('test password validation', () => { ... });
+describe('addExpense', () => { ... });
+describe('test expense creation', () => { ... });
 ```
 
 ---
@@ -237,74 +227,68 @@ describe('test password validation', () => { ... });
 ## Quick Start Reference
 
 ### New Developer Onboarding
-1. Read [`architecture.md`](architecture.md) (5 min) — understand the three-platform single-codebase model
-2. Read [`docs/architecture-deep-dives/component-structure.md`](docs/architecture-deep-dives/component-structure.md) — where components live and how they're organized
+1. Read [`architecture.md`](architecture.md) (5 min) — understand Next.js server/client component model
+2. Read [`docs/architecture-deep-dives/server-components.md`](docs/architecture-deep-dives/server-components.md) — when to use server vs. client
 3. Review [`CLAUDE.md`](CLAUDE.md) (this file) — conventions and hard rules
 
-### Building a New Screen
-1. Read [`docs/implementation-guides/adding-a-component.md`](docs/implementation-guides/adding-a-component.md) — step-by-step checklist
-2. Use `useGroupStore()` for UI state (current modal, selected item, etc.)
-3. Use custom query hooks for server state (Zustand + TanStack Query pattern)
-4. Write component tests using Jest + React Native Testing Library
-5. Verify TypeScript strict mode passes
+### Building a New Page
+1. Read [`docs/implementation-guides/adding-a-page.md`](docs/implementation-guides/adding-a-page.md) — step-by-step checklist
+2. Create server component in `app/` directory for data fetching
+3. Extract interactive UI into `'use client'` components in `components/`
+4. Use `'use server'` actions in `app/*/actions.ts` for mutations
+5. Write tests using Jest + React Testing Library
 
 ### Adding API Integration
-1. Read [`docs/architecture-deep-dives/api-integration.md`](docs/architecture-deep-dives/api-integration.md) — how to wire HTTP calls
-2. Create API client function in `api/` directory that returns `ResponseStructure<T>`
-3. Create custom query hook using TanStack Query (`useQuery`, `useMutation`)
-4. Type response with Java backend contract in `types/ResponseStructure.ts`
-5. Write query hook tests mocking the API client
-
-### Using Code-Gen Tools
-- Refer to [`docs/implementation-guides/codegen.md`](docs/implementation-guides/codegen.md) — how to regenerate types from Java backend endpoints
+1. Read [`docs/architecture-deep-dives/api-routes.md`](docs/architecture-deep-dives/api-routes.md) — API route patterns
+2. Create API route in `app/api/` that calls Java backend via `apiClient`
+3. Use `handleResponseStructure()` to parse backend response
+4. Call API route from server components or server actions
+5. Write API route tests mocking `apiClient`
 
 ---
 
-## Dependency Injection Pattern
+## Styling
 
-**Always** import hooks and stores directly — never wrap with Context API or providers.
-
+### CSS Modules (Recommended)
 ```typescript
-// ✓ Correct
-import { useGroupStore } from '@/hooks/useGroupStore';
-import { useExpensesQuery } from '@/hooks/useExpensesQuery';
+// components/Button.module.css
+.button {
+  padding: 0.75rem 1.5rem;
+  background-color: #fbbf24;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
 
-export const GroupExpenses = () => {
-  const groupId = useGroupStore((state) => state.currentGroupId);
-  const { data } = useExpensesQuery(groupId);
-  return <View>{data?.map(...)}</View>;
-};
+.button:hover {
+  background-color: #f59e0b;
+}
 
-// ✗ Wrong — Context API
-import { useGroupContext } from '@/context/GroupContext';
+// components/Button.tsx
+import styles from './Button.module.css';
 
-export const GroupExpenses = () => {
-  const { groupId } = useGroupContext();
-  ...
-};
+export function Button({ children }: { children: React.ReactNode }) {
+  return <button className={styles.button}>{children}</button>;
+}
 ```
 
----
-
-## Logging
-
-Use React Native's built-in `console` for debugging. For analytics, integrate with backend-provided endpoint only.
-
+### Inline Styles (as fallback)
 ```typescript
-console.log('Group selected::', groupId);
-console.warn('Expense amount exceeded limit::', amount);
-console.error('Failed to fetch expenses::', error);
+<div style={{ padding: '1rem', backgroundColor: '#efe9da' }} />
 ```
 
 ---
 
 ## Environment Variables
 
-Access via `process.env.EXPO_PUBLIC_*` (Expo prefix required for web/native builds):
+Access via `process.env.NEXT_PUBLIC_*` for client-side or `process.env.*` for server-side:
 
 ```typescript
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080';
-const ENV = process.env.EXPO_PUBLIC_ENV || 'development';
+// Client-side (from .env.local)
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+// Server-side only
+const SECRET_KEY = process.env.INTERNAL_SECRET;
 ```
 
 ---

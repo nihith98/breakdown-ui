@@ -1,165 +1,386 @@
 # API Integration Deep-Dive
 
-## Axios Instance Setup
+## Architecture: Next.js API Routes as Middleware
+
+Next.js API routes (`app/api/`) act as middleware between frontend and Java backend:
+
+```
+Client (Browser) → Next.js API Route → Java Backend (http://localhost:8080)
+                  (HTTP-only cookies)    (Bearer token)
+```
+
+API routes handle:
+- Authentication (HTTP-only cookies)
+- Authorization checks
+- Request/response transformation
+- Error handling
+
+---
+
+## Axios Setup
+
+Create an Axios instance for Java backend communication:
 
 ```typescript
+// lib/api-client.ts
 import axios from 'axios';
-import { createAuthRefreshInterceptor } from 'axios-auth-refresh';
 
-const api = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000',
-  withCredentials: true, // Send HttpOnly cookies
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+export const apiClient = axios.create({
+  baseURL: API_URL,
   timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
+
+// Add response logging (optional)
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API error:', error.response?.status, error.message);
+    return Promise.reject(error);
+  }
+);
+
+export default apiClient;
 ```
 
-**Key options:**
-- `baseURL` — API server from environment
-- `withCredentials: true` — browser auto-sends HttpOnly refresh cookies
-- `timeout` — abort if no response in 10s
+Use in server-side code only (API routes, server actions, server components).
 
-## 401 → Refresh → Retry Flow
+---
+
+## Response Structure Handler
+
+All Java backend responses follow `ResponseStructure<T>`. The backend always returns HTTP 200; check `responseStatus` to determine success or failure:
 
 ```typescript
-const onRefresh = async () => {
-  const res = await api.post('/auth/refresh');
-  useAppStore.setState({ accessToken: res.data.responseObject.accessToken });
-};
+// lib/response-handler.ts
+export interface ResponseStructure<T = unknown> {
+  responseStatus: 'SUCCESS' | 'FAILURE';
+  responseMessage: string;
+  responseObject: T | null;
+}
 
-createAuthRefreshInterceptor(api, onRefresh, {
-  pauseInstanceWhileRefreshing: true,
-  shouldRetry: (err) => err.response?.status === 401,
-});
+export function handleResponseStructure<T>(response: ResponseStructure<T>): T {
+  if (response.responseStatus === 'FAILURE') {
+    throw new Error(response.responseMessage || 'Request failed');
+  }
+  return response.responseObject as T;
+}
 ```
 
-**Flow:**
-1. Request fails with 401
-2. Middleware pauses concurrent requests (prevents race condition)
-3. Calls `/auth/refresh`
-4. Updates access token in Zustand
-5. Retries original request with new token
-6. Resumes paused requests
-
-`pauseInstanceWhileRefreshing: true` prevents multiple refresh calls simultaneously.
-
-## Response Shape
-
-All responses follow `ResponseStructure<T>`:
+Use in server actions and API routes. Note: `apiClient.post()` returns an Axios Response — pass `response.data` (the parsed JSON body) to `handleResponseStructure`:
 
 ```typescript
-// Success
-{ "responseStatus": "SUCCESS", "responseMessage": "Data", "responseObject": {...} }
+// app/(dashboard)/groups/[id]/actions.ts ('use server')
+'use server';
 
-// Error (HTTP 200, FAILURE status)
-{ "responseStatus": "FAILURE", "responseMessage": "Error", "responseObject": null }
+import { apiClient } from '@/lib/api-client';
+import { handleResponseStructure } from '@/lib/response-handler';
+
+export async function addExpense(groupId: string, input: any) {
+  const response = await apiClient.post(`/groups/${groupId}/expenses`, input);
+  return handleResponseStructure(response.data);
+}
 ```
 
-HTTP status always 200. Outcome in `responseStatus` field.
+---
 
-## Platform-Specific Token Handling
+## API Routes: Middleware to Backend
 
-**Web:**
-- Refresh token in HttpOnly cookie (automatic)
-- Browser sends on every request; JavaScript cannot read
-- Access token in `Authorization: Bearer` header
+API routes proxy requests to Java backend and handle authentication:
 
-**Native:**
 ```typescript
-const token = await SecureStore.getItemAsync('refresh_token');
-const res = await api.post('/auth/refresh', { refreshToken: token });
-useAppStore.setState({ accessToken: res.data.responseObject.accessToken });
+// app/api/groups/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { apiClient } from '@/lib/api-client';
+import { handleResponseStructure } from '@/lib/response-handler';
+
+export async function GET(request: NextRequest) {
+  try {
+    // Get auth token from HTTP-only cookie
+    const token = request.cookies.get('auth-token')?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Call Java backend with token
+    const response = await apiClient.get('/groups', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    // Return responseObject to client (strip wrapper)
+    return NextResponse.json(handleResponseStructure(response.data));
+  } catch (error: any) {
+    console.error('GET /api/groups error:', error.message);
+    return NextResponse.json({ error: 'Failed to fetch groups' }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const token = request.cookies.get('auth-token')?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+
+    const response = await apiClient.post('/groups', body, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return NextResponse.json(handleResponseStructure(response.data));
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+}
 ```
 
-Both send access token in `Authorization: Bearer` header.
+---
+
+## Authentication: HTTP-Only Cookies
+
+Login API route sets HTTP-only cookie:
+
+```typescript
+// app/api/auth/login/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { apiClient } from '@/lib/api-client';
+import { handleResponseStructure } from '@/lib/response-handler';
+
+export async function POST(request: NextRequest) {
+  try {
+    const { username, password } = await request.json();
+
+    // Call Java backend
+    const response = await apiClient.post('/auth/login', { username, password });
+    const data = handleResponseStructure(response.data);
+
+    // Set HTTP-only cookie (not accessible from JavaScript)
+    const res = NextResponse.json({ success: true, user: data });
+    res.cookies.set('auth-token', data.token, {
+      httpOnly: true,               // Can't be accessed from JS
+      secure: process.env.NODE_ENV === 'production',  // HTTPS only in production
+      sameSite: 'lax',              // CSRF protection
+      maxAge: 60 * 60 * 24 * 7,     // 7 days
+    });
+
+    return res;
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+}
+```
+
+Client-side login call:
+
+```typescript
+// components/LoginForm.tsx ('use client')
+'use client';
+
+import { useState } from 'react';
+
+export function LoginForm() {
+  async function handleLogin(username: string, password: string) {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Login failed');
+    }
+
+    // Redirect to dashboard (cookies are sent automatically)
+    window.location.href = '/groups';
+  }
+
+  return <form onSubmit={() => handleLogin(...)}>.../form>;
+}
+```
+
+**Token is never exposed to JavaScript.** It's sent automatically with every API request in cookies.
+
+---
+
+## Dynamic Routes
+
+Handle route parameters in `app/api/groups/[id]/route.ts`:
+
+```typescript
+// app/api/groups/[id]/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { apiClient } from '@/lib/api-client';
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const token = request.cookies.get('auth-token')?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const response = await apiClient.get(`/groups/${params.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return NextResponse.json(handleResponseStructure(response.data));
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Failed to fetch group' }, { status: 500 });
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const token = request.cookies.get('auth-token')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const response = await apiClient.put(`/groups/${params.id}`, body, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return NextResponse.json(handleResponseStructure(response.data));
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+}
+```
+
+---
+
+## Server Actions (Direct Backend Calls)
+
+Server actions can call the backend directly without going through API routes:
+
+```typescript
+// app/(dashboard)/groups/[id]/actions.ts ('use server')
+'use server';
+
+import { cookies } from 'next/headers';
+import { apiClient } from '@/lib/api-client';
+import { handleResponseStructure } from '@/lib/response-handler';
+
+export async function addExpense(
+  groupId: string,
+  input: { description: string; amount: number }
+) {
+  const cookieStore = cookies();
+  const token = cookieStore.get('auth-token')?.value;
+
+  if (!token) {
+    throw new Error('Unauthorized');
+  }
+
+  const response = await apiClient.post(`/groups/${groupId}/expenses`, input, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return handleResponseStructure(response.data);
+}
+```
+
+Called from client:
+
+```typescript
+// components/AddExpenseForm.tsx ('use client')
+'use client';
+
+import { addExpense } from '@/app/(dashboard)/groups/[id]/actions';
+
+export function AddExpenseForm({ groupId }: { groupId: string }) {
+  async function handleSubmit(e: React.FormEvent) {
+    const result = await addExpense(groupId, { description, amount });
+  }
+
+  return <form onSubmit={handleSubmit}>...</form>;
+}
+```
+
+---
 
 ## Error Handling
 
+### API Route Errors
+
+Return appropriate HTTP status codes:
+
 ```typescript
-api.interceptors.response.use(
-  (res) => res.data.responseObject,
-  (err) => {
-    if (err.response?.status === 401) return Promise.reject(err);
-    console.error(err.response?.data?.responseMessage);
-    Toast.show({ type: 'error' });
-    return Promise.reject(err);
-  },
-);
-```
+// app/api/groups/route.ts
+export async function GET(request: NextRequest) {
+  try {
+    const token = request.cookies.get('auth-token')?.value;
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-401 handled automatically. Other errors logged + toasted.
+    const response = await apiClient.get('/groups', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-## Adding Endpoints
-
-1. **Types:**
-```typescript
-export interface CreateTransactionRequest {
-  groupId: string;
-  description: string;
-  amount: number;
+    return NextResponse.json(handleResponseStructure(response.data));
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+  }
 }
 ```
 
-2. **Hook:**
+### Server Action Errors
+
+Throw errors; they propagate to client:
+
 ```typescript
-export function useCreateTransaction() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (data) => api.post('/transactions', data),
-    onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ['transactions', vars.groupId] });
-    },
-  });
+// app/(dashboard)/groups/[id]/actions.ts
+'use server';
+
+export async function addExpense(groupId: string, input: any) {
+  try {
+    const response = await apiClient.post(`/groups/${groupId}/expenses`, input);
+    return handleResponseStructure(response).data;
+  } catch (error: any) {
+    // Error message sent to client
+    throw new Error(error.response?.data?.responseMessage || 'Failed to add expense');
+  }
 }
 ```
 
-3. **Usage:**
-```typescript
-const { mutate: create } = useCreateTransaction();
-handleSubmit = (data) => create(data);
-```
+---
 
-## Why Axios vs Fetch
+## Environment Variables
 
-Axios advantages:
-- **Interceptor pattern** — centralized request/response handling
-- **axios-auth-refresh** — automatic 401 recovery with race condition prevention
-- **Custom fetch** — requires ~150 lines for pause + refresh logic
-- **Cancellation** — built-in abort support
-- **Timeouts** — configurable
-
-Fetch requires manual queuing, double-refresh prevention, retry logic.
-
-## Complete Setup
+Access from server-side code:
 
 ```typescript
-import axios from 'axios';
-import { createAuthRefreshInterceptor } from 'axios-auth-refresh';
-import { useAppStore } from '@/stores/appStore';
-
-export const api = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000',
-  withCredentials: true,
-});
-
-api.interceptors.request.use((config) => {
-  const token = useAppStore.getState().accessToken;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-api.interceptors.response.use(
-  (res) => res.data.responseObject,
-  (err) => Promise.reject(err),
-);
-
-createAuthRefreshInterceptor(api, async () => {
-  const res = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {}, {
-    withCredentials: true,
-  });
-  useAppStore.setState({ accessToken: res.data.responseObject.accessToken });
-}, { pauseInstanceWhileRefreshing: true });
-
-export default api;
+// lib/api-client.ts
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 ```
 
-All requests use this instance; interceptors ensure token freshness and consistent error handling.
+For server-side-only secrets:
+
+```typescript
+// .env.local (never commit)
+DATABASE_URL=...
+SECRET_KEY=...
+```
+
+---
+
+## See Also
+
+- [`server-actions.md`](server-actions.md) — using server actions for mutations
+- [`authentication.md`](authentication.md) — detailed auth flow with cookies

@@ -6,12 +6,12 @@ Complete reference of all Breakdown backend REST endpoints, organized by feature
 
 ### POST /auth/login
 
-Authenticates a user with email and password credentials.
+Authenticates a user with username and password credentials.
 
 **Request Type:** `LoginRequest`
 ```typescript
 {
-  email: string;
+  username: string;
   password: string;
 }
 ```
@@ -29,20 +29,19 @@ Authenticates a user with email and password credentials.
 ```
 
 **Error Cases:**
-- `400` (Bad Request): Validation error (missing email/password, invalid format)
-  - Message: "Invalid email or password format"
+- `400` (Bad Request): Validation error (missing username/password)
+  - Message: "Invalid username or password format"
 - `400` (Bad Request): Invalid credentials
-  - Message: "Invalid email or password"
+  - Message: "Invalid username or password"
 - `500` (Server Error): Database or authentication service failure
   - Message: "Internal server error: [details]"
 
 **Authentication:** None required (public endpoint)
 
 **Cookie Handling:**
-- Web: Sets HttpOnly secure cookie with refresh token (not accessible to JavaScript)
-- Native: Return refresh token in response for secure storage
+- Sets HttpOnly secure cookie with refresh token (not accessible to JavaScript)
 
-**Used by:** `(app)/(auth)/login.tsx`
+**Used by:** `app/(auth)/login/page.tsx`
 
 ---
 
@@ -119,7 +118,7 @@ Retrieves list of all groups the authenticated user is a member of.
 
 **Authentication:** Required (`Authorization: Bearer <accessToken>`)
 
-**Used by:** `(app)/index.tsx` (Groups screen / home)
+**Used by:** `app/(dashboard)/groups/page.tsx`
 
 ---
 
@@ -163,7 +162,7 @@ Creates a new expense group.
 
 **Authentication:** Required (`Authorization: Bearer <accessToken>`)
 
-**Used by:** `(app)/create-group.tsx` (Create Group screen)
+**Used by:** `app/(dashboard)/groups/new/page.tsx`
 
 ---
 
@@ -203,8 +202,7 @@ Retrieves detailed information about a specific group.
 **Authentication:** Required (`Authorization: Bearer <accessToken>`)
 
 **Used by:**
-- `(app)/group/[groupId]/index.tsx` (Group Details screen)
-- Navigation to group detail pages
+- `app/(dashboard)/groups/[id]/page.tsx`
 
 ---
 
@@ -255,7 +253,7 @@ Retrieves all transactions for a specific group.
 
 **Authentication:** Required (`Authorization: Bearer <accessToken>`)
 
-**Used by:** `(app)/group/[groupId]/transactions.tsx` (Transactions screen)
+**Used by:** `app/(dashboard)/groups/[id]/transactions/page.tsx`
 
 ---
 
@@ -316,7 +314,7 @@ Creates a new transaction in the specified group.
 - Description cannot be empty
 - Payer must be an existing user
 
-**Used by:** `(app)/group/[groupId]/add-transaction.tsx` (Add Transaction screen)
+**Used by:** `app/(dashboard)/groups/[id]/actions.ts` (server action)
 
 ---
 
@@ -365,7 +363,7 @@ Retrieves all settlements (who owes whom) for a group.
 
 **Authentication:** Required (`Authorization: Bearer <accessToken>`)
 
-**Used by:** `(app)/group/[groupId]/settlements.tsx` (Settlements / Who Owes screen)
+**Used by:** `app/(dashboard)/groups/[id]/settlements/page.tsx`
 
 ---
 

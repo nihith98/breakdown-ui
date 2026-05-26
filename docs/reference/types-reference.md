@@ -8,8 +8,8 @@ This document defines all TypeScript interfaces used throughout the Breakdown fr
 
 ```typescript
 interface LoginRequest {
-  /** User's email address */
-  email: string;
+  /** User's login username (not an email address) */
+  username: string;
   
   /** User's password */
   password: string;
@@ -19,7 +19,7 @@ interface LoginRequest {
 **Example:**
 ```typescript
 const request: LoginRequest = {
-  email: "alice@example.com",
+  username: "alice",
   password: "secure-password-123"
 };
 ```
@@ -41,7 +41,7 @@ interface LoginResponse {
 const response: LoginResponse = {
   user: {
     id: "user-123",
-    email: "alice@example.com",
+    username: "alice",
     name: "Alice Cooper",
     createdAt: "2026-01-15T10:30:00Z"
   },
@@ -53,11 +53,11 @@ const response: LoginResponse = {
 
 ```typescript
 interface RefreshTokenRequest {
-  // Empty: refresh token is sent via HttpOnly cookie (web) or secure storage (native)
+  // Empty: refresh token is sent automatically via HttpOnly cookie
 }
 ```
 
-**Usage:** POST /auth/refresh typically sends an empty body; token comes from cookie or storage.
+**Usage:** POST /auth/refresh sends an empty body; refresh token is attached automatically via the HttpOnly cookie set at login.
 
 ### User
 
@@ -66,8 +66,8 @@ interface User {
   /** Unique user identifier (UUID) */
   id: string;
   
-  /** User's email address, used for login */
-  email: string;
+  /** User's login username (no PII — not an email address) */
+  username: string;
   
   /** User's display name */
   name: string;
@@ -81,7 +81,7 @@ interface User {
 ```typescript
 const user: User = {
   id: "user-uuid-123",
-  email: "alice@example.com",
+  username: "alice",
   name: "Alice Cooper",
   createdAt: "2026-01-15T10:30:00Z"
 };
@@ -120,8 +120,8 @@ const group: Group = {
   name: "Summer Trip 2026",
   description: "Annual team outing expenses",
   members: [
-    { id: "user-1", email: "alice@example.com", name: "Alice Cooper", createdAt: "2026-01-15T10:30:00Z" },
-    { id: "user-2", email: "bob@example.com", name: "Bob Smith", createdAt: "2026-02-01T14:22:00Z" }
+    { id: "user-1", username: "alice", name: "Alice Cooper", createdAt: "2026-01-15T10:30:00Z" },
+    { id: "user-2", username: "bob", name: "Bob Smith", createdAt: "2026-02-01T14:22:00Z" }
   ],
   createdBy: "user-1",
   createdAt: "2026-03-10T09:15:00Z"
@@ -205,8 +205,8 @@ interface GroupMember {
   /** Display name */
   name: string;
   
-  /** Email address */
-  email: string;
+  /** Login username */
+  username: string;
 }
 ```
 
@@ -215,7 +215,7 @@ interface GroupMember {
 const member: GroupMember = {
   userId: "user-1",
   name: "Alice Cooper",
-  email: "alice@example.com"
+  username: "alice"
 };
 ```
 

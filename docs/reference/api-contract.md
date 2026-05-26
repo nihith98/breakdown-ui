@@ -30,7 +30,7 @@ Represents an authenticated user in the system.
 ```json
 {
   "id": "user-uuid-here",
-  "email": "alice@example.com",
+  "username": "alice",
   "name": "Alice Cooper",
   "createdAt": "2026-01-15T10:30:00Z"
 }
@@ -38,7 +38,7 @@ Represents an authenticated user in the system.
 
 **Fields:**
 - `id` (string): Unique user identifier (UUID)
-- `email` (string): User's email address, used for login
+- `username` (string): User's login username (no PII — not an email address)
 - `name` (string): User's display name
 - `createdAt` (ISO 8601): Timestamp when user account was created (UTC)
 
@@ -54,13 +54,13 @@ Represents an expense-splitting group.
   "members": [
     {
       "id": "user-uuid-1",
-      "email": "alice@example.com",
+      "username": "alice",
       "name": "Alice Cooper",
       "createdAt": "2026-01-15T10:30:00Z"
     },
     {
       "id": "user-uuid-2",
-      "email": "bob@example.com",
+      "username": "bob",
       "name": "Bob Smith",
       "createdAt": "2026-02-01T14:22:00Z"
     }
@@ -162,7 +162,7 @@ All error responses have `responseStatus: 'FAILURE'` and `responseObject: null`.
 **Occurs when:**
 - Request body fails validation (missing required fields, wrong types)
 - Invalid enum value (e.g., unknown transaction category)
-- Constraint violation (e.g., duplicate email on signup)
+- Constraint violation (e.g., duplicate username on signup)
 
 **Client action:** Validate form before submission; display `responseMessage` to user.
 
@@ -187,12 +187,12 @@ All error responses have `responseStatus: 'FAILURE'` and `responseObject: null`.
 
 ### POST /auth/login
 
-Authenticates a user with email and password.
+Authenticates a user with username and password.
 
 **Request:**
 ```json
 {
-  "email": "alice@example.com",
+  "username": "alice",
   "password": "secure-password-123"
 }
 ```
@@ -205,7 +205,7 @@ Authenticates a user with email and password.
   "responseObject": {
     "user": {
       "id": "user-uuid-here",
-      "email": "alice@example.com",
+      "username": "alice",
       "name": "Alice Cooper",
       "createdAt": "2026-01-15T10:30:00Z"
     },
@@ -218,14 +218,13 @@ Authenticates a user with email and password.
 ```json
 {
   "responseStatus": "FAILURE",
-  "responseMessage": "Invalid email or password",
+  "responseMessage": "Invalid username or password",
   "responseObject": null
 }
 ```
 
 **Cookies:**
-- **Web:** Refresh token stored in HttpOnly secure cookie; not accessible to JavaScript
-- **Native:** Secure token returned in response; store in secure device storage
+- Refresh token stored in HttpOnly secure cookie; not accessible to JavaScript
 
 **Status codes:** 200 for all responses (success/failure distinction in responseStatus)
 

@@ -1,6 +1,6 @@
 # breakDown-ui — Testing Strategy
 
-All tests use **Jest + React Native Testing Library**. No snapshots unless the component layout is immutable.
+All tests use **Jest + React Testing Library**. No snapshots unless the component layout is immutable.
 
 ---
 
@@ -8,184 +8,168 @@ All tests use **Jest + React Native Testing Library**. No snapshots unless the c
 
 | Layer | Framework | Pattern |
 |-------|-----------|---------|
-| Components | Jest + RNTL | `render()`, assert user interactions, no snapshots unless immutable |
-| Query Hooks | Jest + TanStack Query | Mock API client, assert returned data shape and loading states |
-| Zustand Stores | Jest + `renderHook` | Create store instance, call actions, assert state changed |
+| Client Components | Jest + RTL | `render()`, assert user interactions, no snapshots unless immutable |
+| Server Actions | Jest + Mock `apiClient` | Mock Axios client, assert action logic and error handling |
+| API Routes | Jest + Mock `apiClient` | Mock backend calls, assert response formatting |
+| Pages (SSR) | Playwright (E2E) | Integration tests for server components + interactivity |
 | Utilities | Jest | Mock dependencies via `jest.mock()` |
 
 ---
 
-## Component Testing
+## Client Component Testing
 
-Test that components render correctly and respond to user interactions.
+Test client components with `'use client'` directive. Use `@testing-library/react` (not react-native).
 
 ```typescript
-// components/ExpenseList.test.tsx
-import { render, screen, fireEvent } from '@testing-library/react-native';
-import { ExpenseList } from './ExpenseList';
+// __tests__/components/ExpenseList.test.tsx
+import { render, screen } from '@testing-library/react';
+import { ExpenseList } from '@/components/ExpenseList';
 
 describe('ExpenseList_withExpenses_displaysItems', () => {
-  it('should render expense items in list', () => {
+  it('should render expense items', () => {
     const expenses = [
-      { id: '1', amount: 100, description: 'Dinner' },
-      { id: '2', amount: 50, description: 'Gas' },
+      { id: '1', amount: 100, description: 'Dinner', groupId: 'g1', paidBy: 'Alice', splitBetween: [], createdAt: '', updatedAt: '' },
     ];
-    render(<ExpenseList expenses={expenses} onSelectExpense={jest.fn()} />);
-    
-    expect(screen.getByText('Dinner')).toBeTruthy();
-    expect(screen.getByText('Gas')).toBeTruthy();
-  });
-});
+    render(<ExpenseList expenses={expenses} />);
 
-describe('ExpenseList_userSelectsExpense_callsOnSelectExpense', () => {
-  it('should call callback when expense is pressed', () => {
-    const onSelect = jest.fn();
-    const expenses = [{ id: '1', amount: 100, description: 'Dinner' }];
-    
-    render(<ExpenseList expenses={expenses} onSelectExpense={onSelect} />);
-    fireEvent.press(screen.getByText('Dinner'));
-    
-    expect(onSelect).toHaveBeenCalledWith('1');
+    expect(screen.getByText('Dinner')).toBeInTheDocument();
+    expect(screen.getByText(/\$100\.00/)).toBeInTheDocument();
   });
 });
 
 describe('ExpenseList_noExpenses_showsEmptyState', () => {
   it('should render empty state message', () => {
-    render(<ExpenseList expenses={[]} onSelectExpense={jest.fn()} />);
-    expect(screen.getByText('No expenses yet')).toBeTruthy();
+    render(<ExpenseList expenses={[]} />);
+    expect(screen.getByText('No expenses yet')).toBeInTheDocument();
   });
 });
 ```
 
 **Snapshots Only for Immutable Layouts:**
-Use snapshots ONLY for static header/footer components that never change. Avoid snapshots for content-heavy components.
+Use snapshots ONLY for static components. Avoid snapshots for content-heavy components.
 
 ```typescript
-// components/Header.test.tsx
+// __tests__/components/Header.test.tsx
 describe('Header_rendering_matchesSnapshot', () => {
   it('should match snapshot', () => {
-    const { toJSON } = render(<Header appName="breakDown" />);
-    expect(toJSON()).toMatchSnapshot();
+    const { container } = render(<Header appName="breakDown" />);
+    expect(container.firstChild).toMatchSnapshot();
   });
 });
 ```
 
 ---
 
-## Query Hook Testing
+## Server Action Testing
 
-Mock the API client and verify the hook returns the correct data shape and loading states.
+Mock the API client and verify server action logic.
 
 ```typescript
-// hooks/useExpensesQuery.test.ts
-import { renderHook, waitFor } from '@testing-library/react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useExpensesQuery } from './useExpensesQuery';
+// __tests__/app/groups/[id]/actions.test.ts
+import { addExpense } from '@/app/(dashboard)/groups/[id]/actions';
+import * as apiClient from '@/lib/api-client';
 
-jest.mock('@/api/expenseClient');
-import { getExpenses } from '@/api/expenseClient';
+jest.mock('@/lib/api-client');
 
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
-  });
-  return ({ children }) => (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  );
-};
+describe('addExpense_validInput_createsExpense', () => {
+  it('should call API and return data', async () => {
+    // Arrange — mock the Axios response: apiClient.post resolves to { data: <backend JSON> }
+    const mockResponse = {
+      data: {
+        responseStatus: 'SUCCESS' as const,
+        responseMessage: 'Created',
+        responseObject: { id: 'exp-1', groupId: 'g1', description: 'Dinner', amount: 50, paidBy: 'user1', splitBetween: [], createdAt: '', updatedAt: '' },
+      },
+    };
+    (apiClient.default.post as jest.Mock).mockResolvedValue(mockResponse);
 
-describe('useExpensesQuery_validGroupId_returnsExpenses', () => {
-  it('should fetch and return expenses on mount', async () => {
-    (getExpenses as jest.Mock).mockResolvedValue({
-      result: { status: 'SUCCESS', message: '' },
-      data: [{ id: '1', amount: 100, description: 'Dinner' }],
+    // Act
+    const result = await addExpense('group-123', {
+      description: 'Dinner',
+      amount: 50,
+      paidBy: 'user1',
+      splitBetween: ['user1'],
     });
 
-    const { result } = renderHook(
-      () => useExpensesQuery('group-123'),
-      { wrapper: createWrapper() }
+    // Assert
+    expect(result).toEqual(mockResponse.data.responseObject);
+    expect(apiClient.default.post).toHaveBeenCalledWith(
+      '/groups/group-123/expenses',
+      expect.any(Object)
     );
-
-    expect(result.current.isLoading).toBe(true);
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.data).toEqual([{ id: '1', amount: 100, description: 'Dinner' }]);
   });
 });
 
-describe('useExpensesQuery_apiError_setsError', () => {
-  it('should handle API errors gracefully', async () => {
-    const error = new Error('Network error');
-    (getExpenses as jest.Mock).mockRejectedValue(error);
-
-    const { result } = renderHook(
-      () => useExpensesQuery('group-123'),
-      { wrapper: createWrapper() }
+describe('addExpense_apiFailure_throwsError', () => {
+  it('should throw error on API failure', async () => {
+    // Arrange
+    (apiClient.default.post as jest.Mock).mockRejectedValue(
+      new Error('Network error')
     );
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error).toBeDefined();
-  });
-});
-
-describe('useExpensesQuery_emptyGroupId_disablesQuery', () => {
-  it('should not fetch when groupId is null', async () => {
-    const { result } = renderHook(
-      () => useExpensesQuery(null),
-      { wrapper: createWrapper() }
-    );
-
-    expect(result.current.isLoading).toBe(false);
-    expect(getExpenses).not.toHaveBeenCalled();
+    // Act & Assert
+    await expect(
+      addExpense('group-123', {
+        description: 'Dinner',
+        amount: 50,
+        paidBy: 'user1',
+        splitBetween: ['user1'],
+      })
+    ).rejects.toThrow();
   });
 });
 ```
 
 ---
 
-## Store Testing
+## API Route Testing
 
-Test Zustand store actions and state updates.
+Mock the backend calls and verify route logic.
 
 ```typescript
-// hooks/useGroupStore.test.ts
-import { renderHook, act } from '@testing-library/react-native';
-import { useGroupStore } from './useGroupStore';
+// __tests__/app/api/groups/route.test.ts
+import { GET } from '@/app/api/groups/route';
+import { NextRequest } from 'next/server';
+import * as apiClient from '@/lib/api-client';
 
-describe('useGroupStore_setCurrentGroupId_updatesState', () => {
-  it('should update current group ID', () => {
-    const { result } = renderHook(() => useGroupStore());
-    
-    expect(result.current.currentGroupId).toBe(null);
-    
-    act(() => {
-      result.current.setCurrentGroupId('group-123');
+jest.mock('@/lib/api-client');
+
+describe('GET_/api/groups_returnsGroupList', () => {
+  it('should fetch groups and return data', async () => {
+    // Arrange — mock the Axios response: apiClient.get resolves to { data: <backend JSON> }
+    const mockResponse = {
+      data: {
+        responseStatus: 'SUCCESS' as const,
+        responseMessage: 'OK',
+        responseObject: [{ id: 'g1', name: 'Trip to NYC', members: [], description: '', createdAt: '', updatedAt: '' }],
+      },
+    };
+    (apiClient.default.get as jest.Mock).mockResolvedValue(mockResponse);
+
+    const request = new NextRequest('http://localhost:3000/api/groups', {
+      headers: { cookie: 'auth-token=test-token' },
     });
-    
-    expect(result.current.currentGroupId).toBe('group-123');
+
+    // Act
+    const response = await GET(request);
+    const data = await response.json();
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(data).toEqual(mockResponse.data.responseObject);
   });
 });
 
-describe('useGroupStore_setIsModalOpen_togglesModalVisibility', () => {
-  it('should toggle modal visibility', () => {
-    const { result } = renderHook(() => useGroupStore());
-    
-    expect(result.current.isModalOpen).toBe(false);
-    
-    act(() => {
-      result.current.setIsModalOpen(true);
-    });
-    
-    expect(result.current.isModalOpen).toBe(true);
-    
-    act(() => {
-      result.current.setIsModalOpen(false);
-    });
-    
-    expect(result.current.isModalOpen).toBe(false);
+describe('GET_/api/groups_noAuth_returns401', () => {
+  it('should return 401 when no auth token', async () => {
+    // Arrange
+    const request = new NextRequest('http://localhost:3000/api/groups');
+
+    // Act
+    const response = await GET(request);
+
+    // Assert
+    expect(response.status).toBe(401);
   });
 });
 ```
@@ -194,18 +178,18 @@ describe('useGroupStore_setIsModalOpen_togglesModalVisibility', () => {
 
 ## Test Naming Convention
 
-Use the pattern: **componentName_scenario_expectedOutcome**
+Use the pattern: **routeOrAction_scenario_expectedOutcome**
 
 ```typescript
 // ✓ Correct
-describe('LoginScreen_emptyPassword_showsError', () => { ... });
+describe('addExpense_validInput_createsExpense', () => { ... });
 describe('ExpenseList_noItems_showsEmptyState', () => { ... });
-describe('useGroupStore_setCurrentGroupId_updatesState', () => { ... });
-describe('useExpensesQuery_apiError_setsError', () => { ... });
+describe('GET_/api/groups_returnsGroupList', () => { ... });
+describe('POST_/api/auth/login_invalidCredentials_returns401', () => { ... });
 
 // ✗ Wrong
-describe('LoginScreen', () => { ... });
-describe('Test password validation', () => { ... });
+describe('addExpense', () => { ... });
+describe('test expense creation', () => { ... });
 describe('it works', () => { ... });
 ```
 
@@ -213,30 +197,40 @@ describe('it works', () => { ... });
 
 ## Test File Location
 
-Mirror the production package structure under `tests/`:
+Mirror the production structure under `__tests__/`:
 
 ```
 app/
-├── screens/
-│   ├── LoginScreen.tsx
-│   └── GroupScreen.tsx
-├── components/
-│   ├── ExpenseList.tsx
-│   └── UserAvatar.tsx
-└── hooks/
-    ├── useGroupStore.ts
-    └── useExpensesQuery.ts
+├── (dashboard)/
+│   ├── groups/
+│   │   └── [id]/
+│   │       ├── page.tsx
+│   │       └── actions.ts
+│   └── page.tsx
+├── api/
+│   └── groups/
+│       └── route.ts
+└── (auth)/
+    └── login/
+        └── page.tsx
 
-tests/
-├── screens/
-│   ├── LoginScreen.test.tsx
-│   └── GroupScreen.test.tsx
-├── components/
-│   ├── ExpenseList.test.tsx
-│   └── UserAvatar.test.tsx
-└── hooks/
-    ├── useGroupStore.test.ts
-    └── useExpensesQuery.test.ts
+__tests__/
+├── app/
+│   ├── (dashboard)/
+│   │   ├── groups/
+│   │   │   └── [id]/
+│   │   │       ├── actions.test.ts
+│   │   │       └── page.test.tsx
+│   │   └── page.test.tsx
+│   ├── api/
+│   │   └── groups/
+│   │       └── route.test.ts
+│   └── (auth)/
+│       └── login/
+│           └── page.test.tsx
+└── components/
+    ├── ExpenseList.test.tsx
+    └── AddExpenseForm.test.tsx
 ```
 
 ---
@@ -246,19 +240,42 @@ tests/
 Use `// Arrange`, `// Act`, `// Assert` comments for clarity:
 
 ```typescript
-describe('ExpenseList_userSelectsExpense_callsCallback', () => {
-  it('should call onSelectExpense with expense ID', () => {
+describe('ExpenseList_withItems_rendersItems', () => {
+  it('should render expense items', () => {
     // Arrange
-    const onSelect = jest.fn();
-    const expenses = [{ id: '1', amount: 100, description: 'Dinner' }];
-    render(<ExpenseList expenses={expenses} onSelectExpense={onSelect} />);
+    const expenses = [{ id: '1', amount: 100, description: 'Dinner', groupId: 'g1', paidBy: 'Alice', splitBetween: [], createdAt: '', updatedAt: '' }];
+    render(<ExpenseList expenses={expenses} />);
 
     // Act
-    fireEvent.press(screen.getByText('Dinner'));
+    const item = screen.getByText('Dinner');
 
     // Assert
-    expect(onSelect).toHaveBeenCalledWith('1');
+    expect(item).toBeInTheDocument();
   });
+});
+```
+
+---
+
+## E2E Testing with Playwright
+
+Integration tests for full user flows (page load → form submit → navigation):
+
+```typescript
+// e2e/login-flow.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('login_validCredentials_redirectsToDashboard', async ({ page }) => {
+  // Arrange
+  await page.goto('http://localhost:3000/login');
+
+  // Act
+  await page.fill('input[type="text"]', 'testuser');
+  await page.fill('input[type="password"]', 'password123');
+  await page.click('button:has-text("Log In")');
+
+  // Assert
+  await expect(page).toHaveURL('http://localhost:3000/groups');
 });
 ```
 
@@ -266,5 +283,6 @@ describe('ExpenseList_userSelectsExpense_callsCallback', () => {
 
 ## See Also
 
-- [`docs/implementation-guides/adding-a-component.md`](docs/implementation-guides/adding-a-component.md) — checklist for creating components with tests
-- [`docs/implementation-guides/adding-a-query.md`](docs/implementation-guides/adding-a-query.md) — checklist for creating query hooks with mocked API tests
+- [`docs/implementation-guides/adding-a-client-component.md`](docs/implementation-guides/adding-a-client-component.md) — checklist for creating client components with tests
+- [`docs/implementation-guides/adding-a-server-action.md`](docs/implementation-guides/adding-a-server-action.md) — checklist for creating server actions with tests
+- [`docs/implementation-guides/adding-an-api-route.md`](docs/implementation-guides/adding-an-api-route.md) — checklist for creating API routes with tests

@@ -1,381 +1,324 @@
 # Adding a Design System Component
 
-Design system components are reusable, themed UI building blocks that maintain visual consistency across Breakdown. All components live in `components/ui/` and use Unistyles for styling with design tokens.
+Design system components are reusable, themed UI building blocks that maintain visual consistency across Breakdown. All components live in `components/` and use CSS Modules for styling with design tokens.
 
 ## Component Location
 
-All design system components belong in `components/ui/`:
-
 ```
-components/ui/
-├── Button.tsx
-├── Text.tsx
-├── Card.tsx
-├── AmountText.tsx
-└── ErrorBox.tsx
+components/
+├── ui/
+│   ├── AmountText.tsx
+│   ├── AmountText.module.css
+│   ├── Button.tsx
+│   ├── Button.module.css
+│   └── Card.tsx
+├── form/
+│   ├── TextInput.tsx
+│   └── TextInput.module.css
+└── feedback/
+    ├── Toast.tsx
+    └── EmptyState.tsx
 ```
 
 ## Component Template Structure
 
 Every design system component follows this pattern:
 
-1. **Props interface** – Define all props with TypeScript
-2. **Token imports** – Import colors, spacing, fonts from design tokens
-3. **Stylesheet** – Create styles with `createStyleSheet`
-4. **Component function** – Use `useStyles()` hook to access styles
-5. **Render** – Return JSX with props applied
-6. **Export** – Named export for easy imports
+1. **`'use client'` directive** — all interactive/styled components are client components
+2. **Props interface** — define all props with TypeScript
+3. **CSS Module import** — styles co-located with component
+4. **Component function** — use `className` from styles, not inline style objects
+5. **Named export** — for easy tree-shaking and imports
 
-## Styling with Unistyles
+## Styling with CSS Modules
 
-Unistyles provides theme-aware styling with tokens. Use this pattern:
+CSS Modules scope styles to the component. No class name collisions across components.
 
 ```typescript
-import { createStyleSheet, useStyles } from '@/design/unistyles'
-import { tokens } from '@/design/tokens'
+// components/ui/Button.module.css
+.button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;             /* tokens.borderRadius.md */
+  font-family: 'Inter-Medium', sans-serif;
+  cursor: pointer;
+  transition: background-color 80ms ease-out;  /* tokens.animation.durations.xs */
+}
 
-// 1. Define styles at module level
-const stylesheet = createStyleSheet((theme) => ({
-  button: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-  },
-}))
+.primary {
+  background-color: #C27B28;      /* tokens.colors.amber */
+  color: #FFFFFF;
+}
 
-// 2. Use useStyles hook inside component
-export function Button() {
-  const { styles, theme } = useStyles(stylesheet)
-  
-  return <View style={styles.button} />
+.primary:hover {
+  background-color: #8A5518;      /* tokens.colors.amberDark */
+}
+
+.danger {
+  background-color: #B05248;      /* tokens.colors.brick */
+  color: #FFFFFF;
+}
+
+.danger:hover {
+  background-color: #7A3630;      /* tokens.colors.brickDark */
+}
+
+.ghost {
+  background-color: transparent;
+  color: #1B1916;                 /* tokens.colors.ink */
+  border: 1px solid #D8D1C5;     /* tokens.colors.border */
+}
+
+.sm { padding: 0.25rem 0.75rem; font-size: 0.875rem; }
+.md { padding: 0.5rem 1rem; font-size: 1rem; }
+.lg { padding: 0.75rem 1.5rem; font-size: 1.125rem; width: 100%; }
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+```
+
+```typescript
+// components/ui/Button.tsx
+'use client';
+
+import styles from './Button.module.css';
+
+interface ButtonProps {
+  children: React.ReactNode;
+  variant?: 'Primary' | 'Secondary' | 'Ghost' | 'Danger';
+  size?: 'Sm' | 'Md' | 'Lg';
+  onClick: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  type?: 'button' | 'submit' | 'reset';
+}
+
+export function Button({
+  children,
+  variant = 'Primary',
+  size = 'Md',
+  onClick,
+  disabled = false,
+  loading = false,
+  type = 'button',
+}: ButtonProps) {
+  const variantClass = styles[variant.toLowerCase() as keyof typeof styles];
+  const sizeClass = styles[size.toLowerCase() as keyof typeof styles];
+
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled || loading}
+      className={[
+        styles.button,
+        variantClass,
+        sizeClass,
+        (disabled || loading) ? styles.disabled : '',
+      ].join(' ')}
+    >
+      {loading ? 'Loading...' : children}
+    </button>
+  );
 }
 ```
 
 ## Variants Pattern
 
-Variants handle size, sentiment, and state combinations. Use props to select variants:
+Variants control size, sentiment, and state. Use separate CSS classes per variant, applied via `className` composition:
 
 ```typescript
-interface ButtonProps {
-  size?: 'sm' | 'md' | 'lg'           // Size variant
-  sentiment?: 'positive' | 'negative'  // Color sentiment
-  disabled?: boolean                    // State
-}
-
-// In stylesheet:
-const getButtonStyle = (size: string) => {
-  switch (size) {
-    case 'sm': return { paddingHorizontal: 8 }
-    case 'lg': return { paddingHorizontal: 20 }
-    default: return { paddingHorizontal: 12 }
-  }
-}
-
-// In component:
-<Pressable style={[styles.button, getButtonStyle(size)]}>
-  {children}
-</Pressable>
+// Compose classes dynamically
+const className = [
+  styles.base,
+  styles[variant],     // e.g. styles.positive, styles.negative
+  styles[size],        // e.g. styles.sm, styles.lg
+].join(' ');
 ```
 
 ## Prop Guidelines
 
-**Keep components focused:**
-- Accept semantic props (sentiment, size) not low-level ones (color, fontSize)
-- Use defaults for optional props
-- Document required vs optional
-
-**Good examples:**
-- `sentiment: 'positive' | 'negative'` (semantic, theme-aware)
-- `size: 'sm' | 'md' | 'lg'` (finite options)
-- `disabled?: boolean` (optional state)
-
-**Avoid:**
-- `color="rgb(255, 0, 0)"` (hard-coded color, not themeable)
-- `fontSize={14}` (magic number, breaks design system)
-- Too many optional props (keeps component simple)
+- Accept semantic props (`sentiment`, `size`) not raw CSS (`color`, `fontSize`)
+- Provide defaults for all optional props
+- Use `className?: string` to allow callers to extend styles
 
 ## Testing Pattern
 
-Test components with snapshot tests and interaction tests:
+Test components with `@testing-library/react` (NOT react-native):
 
 ```typescript
-import { render } from '@testing-library/react-native'
-import { AmountText } from './AmountText'
+// __tests__/components/ui/Button.test.tsx
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Button } from '@/components/ui/Button';
 
-describe('AmountText', () => {
-  // Snapshot: verify structure
-  it('should render amount with correct formatting', () => {
-    const { toJSON } = render(
-      <AmountText amount="25.50" sentiment="negative" />
-    )
-    expect(toJSON()).toMatchSnapshot()
-  })
+describe('Button_primaryVariant_rendersCorrectly', () => {
+  it('should render button with text', () => {
+    render(<Button onClick={() => {}}>Click me</Button>);
+    expect(screen.getByText('Click me')).toBeInTheDocument();
+  });
+});
 
-  // Interaction: verify behavior
-  it('should apply negative sentiment color', () => {
-    const { getByTestId } = render(
-      <AmountText amount="25.50" sentiment="negative" testID="amount" />
-    )
-    const element = getByTestId('amount')
-    expect(element).toHaveStyle({ color: theme.colors.negative })
-  })
-})
+describe('Button_disabled_preventsClick', () => {
+  it('should not call onClick when disabled', () => {
+    const handleClick = jest.fn();
+    render(<Button onClick={handleClick} disabled>Click me</Button>);
+    fireEvent.click(screen.getByText('Click me'));
+    expect(handleClick).not.toHaveBeenCalled();
+  });
+});
+
+describe('Button_loading_showsLoadingText', () => {
+  it('should show loading text when loading is true', () => {
+    render(<Button onClick={() => {}} loading>Submit</Button>);
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+  });
+});
 ```
 
 ## Complete Example: AmountText Component
 
-This is a realistic, production-ready component for displaying monetary amounts with proper formatting and sentiment-based coloring:
+This is a production-ready web component for displaying monetary amounts:
+
+```css
+/* components/ui/AmountText.module.css */
+
+.amount {
+  font-family: 'IBMPlexMono-Medium', monospace;
+  font-weight: 500;
+  text-align: right;
+  /* Monospace ensures digits align vertically in lists */
+}
+
+.sm { font-size: 0.875rem; line-height: 1.25rem; }  /* 14px */
+.md { font-size: 1.125rem; line-height: 1.5rem; }   /* 18px */
+.lg { font-size: 1.5rem;   line-height: 2rem; }     /* 24px */
+
+.positive { color: #3A6B4D; }  /* tokens.colors.pine */
+.negative { color: #B05248; }  /* tokens.colors.brick */
+.neutral  { color: #1B1916; }  /* tokens.colors.ink */
+```
 
 ```typescript
 // components/ui/AmountText.tsx
+'use client';
 
-import React from 'react'
-import { Text as RNText, TextProps as RNTextProps } from 'react-native'
-import { createStyleSheet, useStyles } from '@/design/unistyles'
+import styles from './AmountText.module.css';
 
 /**
- * Monetary amount display component
- * 
- * Displays amounts with:
- * - Proper decimal formatting (always 2 decimals)
- * - Sentiment-based coloring (positive=green, negative=red, neutral=default)
- * - IBMPlexMono font for monospaced alignment (currency amounts align vertically)
- * - Right alignment for accounting-style display
+ * Monetary amount display component.
+ *
+ * Uses IBMPlexMono so digits align vertically in accounting lists.
+ * Sentiment coloring: positive (pine/green), negative (brick/red), neutral (ink/default).
+ * Amounts come pre-formatted as strings from the API (already BigDecimal-safe).
  */
+interface AmountTextProps {
+  /** Amount as string, e.g. "89.50" (already BigDecimal-formatted from API) */
+  value: string;
 
-interface AmountTextProps extends Omit<RNTextProps, 'children'> {
-  /** Amount as string (already calculated with BigDecimal precision) */
-  amount: string | number
-  
-  /** Visual sentiment: 'positive' (received), 'negative' (owed/spent), 'neutral' (display only) */
-  sentiment?: 'positive' | 'negative' | 'neutral'
-  
+  /** Visual sentiment */
+  sentiment?: 'positive' | 'negative' | 'neutral';
+
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg'
-  
-  /** Show currency symbol prefix */
-  showSymbol?: boolean
-  
-  /** Optional prefix/suffix text */
-  prefix?: string
-  suffix?: string
+  size?: 'sm' | 'md' | 'lg';
+
+  /** Whether to show the $ currency symbol */
+  showSymbol?: boolean;
+
+  /** Optional CSS class for layout-level overrides */
+  className?: string;
 }
 
-export const AmountText = React.forwardRef<RNText, AmountTextProps>(
-  (
-    {
-      amount,
-      sentiment = 'neutral',
-      size = 'md',
-      showSymbol = true,
-      prefix,
-      suffix,
-      style,
-      ...props
-    },
-    ref
-  ) => {
-    const { styles, theme } = useStyles(stylesheet)
+export function AmountText({
+  value,
+  sentiment = 'neutral',
+  size = 'md',
+  showSymbol = true,
+  className,
+}: AmountTextProps) {
+  // Format to exactly 2 decimal places
+  const formatted = parseFloat(value).toFixed(2);
+  const display = showSymbol ? `$${formatted}` : formatted;
 
-    // Format amount with 2 decimals
-    const numAmount = typeof amount === 'string'
-      ? parseFloat(amount)
-      : amount
-    const formattedAmount = numAmount.toFixed(2)
-
-    // Build display text
-    const displayText = [
-      prefix,
-      showSymbol ? '$' : '',
-      formattedAmount,
-      suffix,
-    ]
-      .filter(Boolean)
-      .join('')
-
-    // Get sentiment color
-    const getSentimentColor = () => {
-      switch (sentiment) {
-        case 'positive':
-          return { color: theme.colors.success }  // Green: money received
-        case 'negative':
-          return { color: theme.colors.danger }   // Red: money owed
-        case 'neutral':
-          return { color: theme.colors.text }     // Default text color
-        default:
-          return {}
-      }
-    }
-
-    // Get size styles
-    const getSizeStyle = () => {
-      switch (size) {
-        case 'sm':
-          return styles.amountSmall
-        case 'lg':
-          return styles.amountLarge
-        case 'md':
-        default:
-          return styles.amountMedium
-      }
-    }
-
-    return (
-      <RNText
-        ref={ref}
-        style={[
-          styles.amount,
-          getSizeStyle(),
-          getSentimentColor(),
-          style,
-        ]}
-        {...props}
-      >
-        {displayText}
-      </RNText>
-    )
-  }
-)
-
-AmountText.displayName = 'AmountText'
-
-// Styles
-const stylesheet = createStyleSheet((theme) => ({
-  // Base amount style: monospace font for proper currency alignment
-  amount: {
-    // IBMPlexMono ensures each digit has equal width (essential for accounting display)
-    fontFamily: 'IBMPlexMono-Medium',
-    fontWeight: '500',
-    textAlign: 'right',
-    color: theme.colors.text,
-  },
-
-  // Size variants
-  amountSmall: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-
-  amountMedium: {
-    fontSize: 14,
-    lineHeight: 18,
-  },
-
-  amountLarge: {
-    fontSize: 16,
-    lineHeight: 20,
-  },
-}))
+  return (
+    <span
+      className={[
+        styles.amount,
+        styles[size],
+        styles[sentiment],
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {display}
+    </span>
+  );
+}
 ```
 
 ## Usage Examples
 
 ```typescript
-// Basic usage
-<AmountText amount="25.50" sentiment="negative" />
-// Displays: $25.50 (in red)
+// Positive (owed to you)
+<AmountText value="89.50" sentiment="positive" size="lg" />
+// → $89.50 in pine/green
 
-// Received payment (positive sentiment)
-<AmountText amount="100.00" sentiment="positive" />
-// Displays: $100.00 (in green)
+// Negative (you owe)
+<AmountText value="25.75" sentiment="negative" size="md" />
+// → $25.75 in brick/red
 
-// Neutral display (no color)
-<AmountText amount="50.00" sentiment="neutral" />
-// Displays: $50.00 (default color)
+// Neutral (informational)
+<AmountText value="150.00" sentiment="neutral" size="sm" />
+// → $150.00 in default ink color
 
-// With prefix/suffix
-<AmountText
-  amount="25.50"
-  prefix="You owe: "
-  sentiment="negative"
-/>
-// Displays: You owe: $25.50 (in red)
-
-// Custom size
-<AmountText amount="1234.56" size="lg" sentiment="positive" />
-// Displays: $1234.56 (large, in green)
+// Without symbol (e.g. inside a labeled field)
+<AmountText value="50.00" showSymbol={false} />
+// → 50.00
 ```
 
-## Key Design Decisions
-
-**1. IBMPlexMono Font**: Monospace fonts ensure each digit aligns vertically in accounting-style lists. Variable-width fonts make amounts harder to scan.
-
-**2. Sentiment Coloring**: Green/red conveys meaning without text—users immediately know if an amount is positive or negative.
-
-**3. Right Alignment**: Accounting convention places amounts right-aligned so the decimal point lines up vertically.
-
-**4. String Input**: Amounts come pre-calculated as strings from the API (already BigDecimal-formatted) to avoid floating-point precision issues.
-
-**5. Optional Symbol**: Show `$` for user-facing displays, hide for internal UI where context is clear.
-
-## Testing the Component
+## Testing AmountText
 
 ```typescript
-// components/ui/AmountText.test.tsx
+// __tests__/components/ui/AmountText.test.tsx
+import { render, screen } from '@testing-library/react';
+import { AmountText } from '@/components/ui/AmountText';
 
-import { render } from '@testing-library/react-native'
-import { AmountText } from './AmountText'
+describe('AmountText_positiveValue_showsDollarSign', () => {
+  it('should render with dollar sign and 2 decimals', () => {
+    render(<AmountText value="25" sentiment="positive" />);
+    expect(screen.getByText('$25.00')).toBeInTheDocument();
+  });
+});
 
-describe('AmountText', () => {
-  it('should format amount with 2 decimals', () => {
-    const { getByText } = render(
-      <AmountText amount="25" sentiment="neutral" />
-    )
-    expect(getByText('$25.00')).toBeTruthy()
-  })
+describe('AmountText_negativeValue_formatsCorrectly', () => {
+  it('should format to 2 decimal places', () => {
+    render(<AmountText value="89.5" sentiment="negative" />);
+    expect(screen.getByText('$89.50')).toBeInTheDocument();
+  });
+});
 
-  it('should apply positive sentiment color', () => {
-    const { getByTestId } = render(
-      <AmountText
-        amount="100.50"
-        sentiment="positive"
-        testID="amount-positive"
-      />
-    )
-    const text = getByTestId('amount-positive')
-    // Color verification (implementation depends on test library setup)
-    expect(text.props.style).toContainEqual({ color: expect.any(String) })
-  })
-
-  it('should use monospace font', () => {
-    const { getByTestId } = render(
-      <AmountText
-        amount="50.00"
-        sentiment="neutral"
-        testID="amount-text"
-      />
-    )
-    const text = getByTestId('amount-text')
-    expect(text.props.style.fontFamily).toBe('IBMPlexMono-Medium')
-  })
-
-  it('should handle prefix and suffix', () => {
-    const { getByText } = render(
-      <AmountText
-        amount="25.50"
-        prefix="You owe: "
-        suffix=" total"
-        sentiment="negative"
-      />
-    )
-    expect(getByText('You owe: $25.50 total')).toBeTruthy()
-  })
-})
+describe('AmountText_noSymbol_omitsDollarSign', () => {
+  it('should not show dollar sign when showSymbol is false', () => {
+    render(<AmountText value="50.00" showSymbol={false} />);
+    expect(screen.getByText('50.00')).toBeInTheDocument();
+    expect(screen.queryByText('$50.00')).not.toBeInTheDocument();
+  });
+});
 ```
 
 ## Pattern: Creating New Components
 
-Follow this checklist when adding components:
+Follow this checklist when adding a component:
 
-1. ✅ Create file in `components/ui/`
-2. ✅ Define `Props` interface extending RN prop types
-3. ✅ Import tokens from `@/design/tokens`
-4. ✅ Create `stylesheet` with `createStyleSheet`
-5. ✅ Call `useStyles()` inside component
-6. ✅ Use semantic props (sentiment, size) not hard-coded values
-7. ✅ Export component with `displayName` for debugging
-8. ✅ Add JSDoc comments explaining usage
-9. ✅ Write snapshot + interaction tests
-10. ✅ Document with usage examples
-
-All components should be reusable, themeable, and type-safe.
+1. ✅ Create `ComponentName.tsx` in `components/ui/` (or `form/`, `feedback/`, `navigation/`)
+2. ✅ Add `'use client'` directive at the top
+3. ✅ Create co-located `ComponentName.module.css` with scoped styles
+4. ✅ Define a `Props` interface with typed, semantic props
+5. ✅ Use `className` composition — no inline `style={{}}` for static values
+6. ✅ Hard-code token values in CSS (comments show which token); use `tokens.*` only for dynamic JS values
+7. ✅ Named export (not default export)
+8. ✅ Add JSDoc comment explaining purpose and key decisions
+9. ✅ Write unit tests with `@testing-library/react`
+10. ✅ Add to `component-inventory.md` with props table and usage example
