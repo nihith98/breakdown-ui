@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- @dsCard group="Components" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; }
+  body {
+    background: var(--bg-page);
+    font-family: var(--font-sans);
+    color: var(--fg-primary);
+    padding: 24px 32px;
+    box-sizing: border-box;
+  }
+  .summary {
+    background: var(--surface-card);
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    padding: 18px 20px;
+    width: 240px;
+  }
+  .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--fg-secondary); margin-bottom: 8px; }
+  .amount { font-family: var(--font-mono); font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+  .sub { font-family: var(--font-mono); font-size: 11px; color: var(--fg-tertiary); margin-top: 8px; }
+  .row { display: flex; gap: 18px; }
+  .neg .amount { color: var(--money-negative); }
+  .pos .amount { color: var(--money-positive); }
+  .neu .amount { color: var(--fg-primary); }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="summary neg">
+      <div class="label">You owe</div>
+      <div class="amount">-$245.50</div>
+      <div class="sub">3 outstanding settlements</div>
+    </div>
+    <div class="summary pos">
+      <div class="label">Owed to you</div>
+      <div class="amount">+$128.75</div>
+      <div class="sub">2 outstanding settlements</div>
+    </div>
+    <div class="summary neu">
+      <div class="label">Net</div>
+      <div class="amount" style="color: var(--money-negative);">-$116.75</div>
+      <div class="sub">trip · sept hawaii</div>
+    </div>
+  </div>
+</body>
+</html>

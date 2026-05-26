@@ -1,0 +1,55 @@
+<!doctype html>
+<!-- @dsCard group="Colors" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg-page);
+    font-family: var(--font-sans);
+    padding: 24px 32px;
+    box-sizing: border-box;
+  }
+  .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .swatch {
+    border-radius: 8px;
+    height: 130px;
+    display: flex;
+    flex-direction: column;
+    padding: 14px;
+    justify-content: space-between;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #1e1e2e;
+  }
+  .name { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .role { font-size: 10px; opacity: 0.7; }
+  .hex { font-family: var(--font-mono); font-size: 12px; }
+  .mauve   { background: #c586c0; }
+  .mauve-lt{ background: #cba6f7; }
+  .yellow  { background: #dcdcaa; }
+  .blue    { background: #9cdcfe; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="swatch mauve">
+      <div><div class="name">Accent · keyword</div><div class="role">primary buttons, brand</div></div>
+      <div class="hex">#c586c0</div>
+    </div>
+    <div class="swatch yellow">
+      <div><div class="name">Highlight · function</div><div class="role">active tabs, secondary CTA</div></div>
+      <div class="hex">#dcdcaa</div>
+    </div>
+    <div class="swatch mauve-lt">
+      <div><div class="name">Mauve · hover</div><div class="role">primary hover state</div></div>
+      <div class="hex">#cba6f7</div>
+    </div>
+    <div class="swatch blue">
+      <div><div class="name">Variable blue</div><div class="role">links, info</div></div>
+      <div class="hex">#9cdcfe</div>
+    </div>
+  </div>
+</body>
+</html>

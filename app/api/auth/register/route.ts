@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiClient } from '@/lib/api-client';
+import { registrationApiClient } from '@/lib/api-client';
 import { handleResponseStructure } from '@/lib/response-handler';
 
 export async function POST(request: NextRequest) {
@@ -14,22 +14,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call Java backend
-    const response = await apiClient.post('/auth/register', {
+    const response = await registrationApiClient.post('/auth/register', {
       username,
       password,
     });
 
-    const { data } = handleResponseStructure(response.data);
-
-    // Create response with HTTP-only cookie
-    const res = NextResponse.json({ success: true, user: data });
-    res.cookies.set('auth-token', (data as any).token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    const user = handleResponseStructure(response.data);
+    const res = NextResponse.json({ success: true, user });
 
     return res;
   } catch (error: any) {

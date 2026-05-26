@@ -1,0 +1,79 @@
+<!doctype html>
+<!-- @dsCard group="Components" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; }
+  body {
+    background: var(--bg-page);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    padding: 18px 24px;
+  }
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border-default);
+    margin-bottom: 16px;
+  }
+  .tab {
+    padding: 12px 20px;
+    background: transparent;
+    color: var(--fg-secondary);
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .tab.active { color: var(--accent-highlight); border-bottom-color: var(--accent-highlight); }
+  .tab:hover:not(.active) { color: var(--fg-primary); }
+
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+  .banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--signal-error-tint);
+    border: 1px solid var(--signal-error);
+    border-radius: 8px;
+    color: var(--signal-error);
+    font-size: 13px;
+  }
+  .banner .x { cursor: pointer; }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-default);
+    background: rgba(203,166,247,0.10);
+    color: var(--fg-primary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .tag.lavender { background: rgba(220,220,170,0.10); border-color: rgba(220,220,170,0.35); }
+  .tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .tag.lavender .dot { background: var(--accent-highlight); }
+</style>
+</head>
+<body>
+  <div class="tabs">
+    <button class="tab active">Expenses</button>
+    <button class="tab">Members</button>
+    <button class="tab">Settle up</button>
+    <button class="tab">Activity</button>
+  </div>
+  <div class="row">
+    <span class="banner">Looks like this transaction is stuck in a time loop. Try again? <span class="x">✕</span></span>
+    <span class="tag"><span class="dot"></span>recurring</span>
+    <span class="tag lavender"><span class="dot"></span>family group</span>
+  </div>
+</body>
+</html>

@@ -1,90 +1,169 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { loginUser } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
+import { loginUser } from '@/lib/auth';
+import styles from './login.module.css';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bannerError, setBannerError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<{ username?: string; password?: string }>({});
   const router = useRouter();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setBannerError('');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const validateFields = (): boolean => {
+    const errors: typeof fieldErrors = {};
+    if (!username.trim()) {
+      errors.username = 'Username is required';
+    }
+    if (!password) {
+      errors.password = 'Password is required';
+    }
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
+
+    if (!validateFields()) {
+      return;
+    }
+
+    setBannerError('');
+    setIsSubmitting(true);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
       await loginUser(username, password);
-      router.push('/groups');
+      router.push('/auth/success');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      if (err.name === 'AbortError') {
+        setBannerError('Request timeout. Try again?');
+      } else {
+        setBannerError(err.message || 'Login failed');
+      }
     } finally {
-      setIsLoading(false);
+      clearTimeout(timeoutId);
+      setIsSubmitting(false);
     }
   }
 
   return (
-    <>
-      <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>breakDown</h1>
-
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-            Username
-          </label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            style={{ width: '100%' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-            Password
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: '100%' }}
-          />
-        </div>
-
-        {error && (
-          <div style={{
-            background: '#fee',
-            color: '#c33',
-            padding: '0.75rem',
-            borderRadius: '0.375rem',
-            marginBottom: '1rem',
-          }}>
-            {error}
+    <div className={styles.card}>
+      <form onSubmit={handleSubmit} noValidate className={styles.form}>
+        {bannerError && (
+          <div className={styles.errorBanner} role="alert">
+            <span className={styles.errorText}>{bannerError}</span>
+            <button
+              type="button"
+              className={styles.closeButton}
+              onClick={() => setBannerError('')}
+              aria-label="Dismiss error"
+            >
+              ✕
+            </button>
           </div>
         )}
 
+        <div className={styles.field}>
+          <label htmlFor="username" className={styles.label}>Username</label>
+          <input
+            id="username"
+            type="text"
+            className={`${styles.input} ${fieldErrors.username ? styles.error : ''}`}
+            placeholder="Enter your username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            onBlur={() => {
+              if (!username.trim()) {
+                setFieldErrors((prev) => ({ ...prev, username: 'Username is required' }));
+              } else {
+                setFieldErrors((prev) => ({ ...prev, username: undefined }));
+              }
+            }}
+            disabled={isSubmitting}
+            aria-describedby={fieldErrors.username ? 'username-error' : undefined}
+          />
+          {fieldErrors.username && (
+            <span id="username-error" className={styles.fieldError}>{fieldErrors.username}</span>
+          )}
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="password" className={styles.label}>Password</label>
+          <div className={styles.inputWrapper}>
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              className={`${styles.input} ${fieldErrors.password ? styles.error : ''}`}
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => {
+                if (!password) {
+                  setFieldErrors((prev) => ({ ...prev, password: 'Password is required' }));
+                } else {
+                  setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                }
+              }}
+              disabled={isSubmitting}
+              aria-describedby={fieldErrors.password ? 'password-error' : undefined}
+            />
+            <button
+              type="button"
+              className={styles.eyeToggle}
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label="Toggle password visibility"
+              disabled={isSubmitting}
+            >
+              {showPassword ? '👁' : '👁‍🗨'}
+            </button>
+          </div>
+          {fieldErrors.password && (
+            <span id="password-error" className={styles.fieldError}>{fieldErrors.password}</span>
+          )}
+        </div>
+
         <button
           type="submit"
-          disabled={isLoading}
-          style={{ width: '100%', marginBottom: '1rem' }}
+          className={styles.button}
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
         >
-          {isLoading ? 'Logging in...' : 'Log In'}
+          {isSubmitting ? (
+            <>
+              <span className={styles.spinner} />
+              LOGGING IN...
+            </>
+          ) : (
+            'LOG IN'
+          )}
         </button>
       </form>
 
-      <p style={{ textAlign: 'center', fontSize: '0.9rem' }}>
-        Don't have an account?{' '}
-        <Link href="/register" style={{ color: '#0969da' }}>
-          Register here
+      <div className={styles.signUpLink}>
+        Don&apos;t have an account?{' '}
+        <Link href="/register" aria-label="Create a new account">
+          Sign up
         </Link>
-      </p>
-    </>
+      </div>
+    </div>
   );
 }

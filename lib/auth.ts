@@ -1,10 +1,4 @@
-/**
- * Authentication utilities
- * Note: Token is stored in HTTP-only cookie (set by API routes)
- * This file provides helpers for auth flow
- */
-
-export async function loginUser(username: string, password: string) {
+export async function loginUser(username: string, password: string): Promise<void> {
   const response = await fetch('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -12,22 +6,20 @@ export async function loginUser(username: string, password: string) {
   });
 
   if (!response.ok) {
-    throw new Error('Login failed');
+    const data = await response.json();
+    throw new Error(data.error ?? 'Login failed');
   }
-
-  return response.json();
 }
 
-export async function logoutUser() {
+export async function logoutUser(): Promise<void> {
   const response = await fetch('/api/auth/logout', {
     method: 'POST',
   });
 
   if (!response.ok) {
-    throw new Error('Logout failed');
+    const data = await response.json();
+    throw new Error(data.error ?? 'Logout failed');
   }
-
-  return response.json();
 }
 
 export async function getCurrentUser() {

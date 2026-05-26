@@ -1,0 +1,60 @@
+<!doctype html>
+<!-- @dsCard group="Colors" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg-page);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    padding: 24px 32px;
+    box-sizing: border-box;
+  }
+  .stack { display: grid; gap: 8px; }
+  .row {
+    display: grid;
+    grid-template-columns: 200px 1fr 140px;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-default);
+    border-radius: 6px;
+    background: var(--surface-card);
+  }
+  .name { font-weight: 600; font-size: 13px; }
+  .desc { font-size: 12px; color: var(--fg-secondary); }
+  .sample { font-family: var(--font-mono); font-size: 12px; text-align: right; }
+  .primary { color: var(--fg-primary); }
+  .secondary { color: var(--fg-secondary); }
+  .tertiary { color: var(--fg-tertiary); }
+  .link { color: var(--fg-link); }
+</style>
+</head>
+<body>
+  <div class="stack">
+    <div class="row">
+      <span class="name primary">Primary text</span>
+      <span class="desc">Body, headings, content</span>
+      <span class="sample primary">#cdd6f4</span>
+    </div>
+    <div class="row">
+      <span class="name secondary">Secondary text</span>
+      <span class="desc">Labels, captions, secondary copy</span>
+      <span class="sample secondary">#a6adc8</span>
+    </div>
+    <div class="row">
+      <span class="name tertiary">Tertiary text</span>
+      <span class="desc">Disabled, hints, placeholders</span>
+      <span class="sample tertiary">#6c7086</span>
+    </div>
+    <div class="row">
+      <span class="name link">Link / variable blue</span>
+      <span class="desc">Anchor color · hovers to yellow</span>
+      <span class="sample link">#9cdcfe</span>
+    </div>
+  </div>
+</body>
+</html>

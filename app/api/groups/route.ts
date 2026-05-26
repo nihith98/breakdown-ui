@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiClient } from '@/lib/api-client';
+import { groupViewApiClient, groupAdminApiClient } from '@/lib/api-client';
 import { handleResponseStructure } from '@/lib/response-handler';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const token = request.cookies.get('access-token')?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const axiosResponse = await apiClient.get('/groups', {
+    const axiosResponse = await groupViewApiClient.get('/groups', {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const { data } = handleResponseStructure(axiosResponse.data);
+    const data = handleResponseStructure(axiosResponse.data);
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Get groups error:', error.message);
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const token = request.cookies.get('access-token')?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -35,11 +35,11 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const axiosResponse = await apiClient.post('/groups', body, {
+    const axiosResponse = await groupAdminApiClient.post('/groups', body, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const { data } = handleResponseStructure(axiosResponse.data);
+    const data = handleResponseStructure(axiosResponse.data);
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Create group error:', error.message);

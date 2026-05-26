@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>breakDown — IDE variant</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="tokens.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script>
+  // Set theme synchronously before React mounts — prevents flash of dark content on light-theme reload.
+  (function () {
+    try {
+      var stored = localStorage.getItem('bd-theme');
+      var theme = stored === 'light' || stored === 'dark'
+        ? stored
+        : (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+  })();
+</script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  /* Status bar — quiet by default, links light up on hover */
+  .ide-status {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: 30px;
+    background: var(--surface-panel);
+    border-top: 1px solid var(--border-strong);
+    color: var(--fg-tertiary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 18px;
+    z-index: 50;
+  }
+  .ide-status .seg {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ide-status .seg .k { color: var(--syntax-comment); }
+  .ide-status .seg .v { color: var(--fg-secondary); }
+  .ide-status .spacer { flex: 1; }
+  .ide-status .link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--fg-secondary);
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all var(--transition-fast);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+  }
+  .ide-status .link:hover {
+    color: var(--accent-highlight);
+    background: rgba(220, 220, 170, 0.06);
+    text-decoration: none;
+  }
+  .ide-status .link svg { width: 13px; height: 13px; }
+  .ide-status .ok { color: var(--money-positive); font-size: 8px; }
+  body { padding-bottom: 30px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="Primitives.jsx"></script>
+<script type="text/babel" src="Auth.jsx"></script>
+<script type="text/babel" src="Dashboard.jsx"></script>
+<script type="text/babel" src="App.jsx"></script>
+
+<script type="text/babel">
+  // Inline SVG icon helpers — kept here so we don't have to extend Primitives.jsx for two glyphs.
+  const IconGithub = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+    </svg>
+  );
+  const IconLinkedin = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/>
+      <rect width="4" height="12" x="2" y="9"/>
+      <circle cx="4" cy="4" r="2"/>
+    </svg>
+  );
+  const IconSun = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+    </svg>
+  );
+  const IconMoon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+    </svg>
+  );
+
+  // Wrap <App /> with quiet status bar — feedback links (GitHub, LinkedIn) + system info + theme toggle.
+  function IDEChrome() {
+    const [theme, setTheme] = React.useState(() => {
+      const stored = localStorage.getItem("bd-theme");
+      if (stored === "light" || stored === "dark") return stored;
+      return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    });
+    React.useEffect(() => {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("bd-theme", theme);
+    }, [theme]);
+    const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+
+    return (
+      <>
+        <App theme={theme} onThemeToggle={toggleTheme} />
+        <div className="ide-status" role="contentinfo" aria-label="App info and feedback">
+          <span className="seg"><span className="k">v</span><span className="v">0.1.0</span></span>
+          <span className="seg"><span className="k">engine</span><span className="v">0.8.1</span></span>
+          <span className="seg"><span className="ok">●</span><span className="v">no telemetry</span></span>
+          <span className="spacer"></span>
+          <button className="link" onClick={toggleTheme} aria-label={"Switch to " + (theme === "dark" ? "light" : "dark") + " theme"} type="button">
+            {theme === "dark" ? <IconSun /> : <IconMoon />} {theme === "dark" ? "light" : "dark"}
+          </button>
+          <a className="link" href="https://github.com/" target="_blank" rel="noopener" aria-label="Feedback on GitHub">
+            <IconGithub /> feedback
+          </a>
+          <a className="link" href="https://www.linkedin.com/" target="_blank" rel="noopener" aria-label="Connect on LinkedIn">
+            <IconLinkedin /> connect
+          </a>
+        </div>
+      </>
+    );
+  }
+  const root = ReactDOM.createRoot(document.getElementById("root"));
+  root.render(<IDEChrome />);
+</script>
+</body>
+</html>

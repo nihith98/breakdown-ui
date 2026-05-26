@@ -1,0 +1,55 @@
+<!doctype html>
+<!-- @dsCard group="Components" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; }
+  body {
+    background: var(--bg-page);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    padding: 22px 32px;
+    box-sizing: border-box;
+  }
+  .toast {
+    background: var(--surface-card-lavender);
+    border: 1px solid var(--border-lavender);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--fg-primary);
+    max-width: 360px;
+  }
+  .toast.success { border-color: rgba(34,197,94,0.40); background: rgba(34,197,94,0.08); }
+  .toast.success .icon { color: var(--money-positive); }
+  .toast.error { border-color: rgba(239,68,68,0.40); background: rgba(239,68,68,0.08); }
+  .toast.error .icon { color: var(--money-negative); }
+  .toast .icon { font-family: var(--font-mono); font-weight: 700; font-size: 14px; }
+  .stack { display: grid; gap: 10px; }
+  .meta { font-family: var(--font-mono); font-size: 10px; color: var(--fg-tertiary); margin-left: auto; }
+</style>
+</head>
+<body>
+  <div class="stack">
+    <div class="toast success">
+      <span class="icon">✓</span>
+      <span>Expense added. Settlements updated.</span>
+      <span class="meta">just now</span>
+    </div>
+    <div class="toast error">
+      <span class="icon">!</span>
+      <span>That amount doesn't work. Try a positive number.</span>
+      <span class="meta">just now</span>
+    </div>
+    <div class="toast">
+      <span class="icon" style="color: var(--accent-highlight);">⌁</span>
+      <span>Optimizing settlements…</span>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,13 +1,24 @@
-/**
- * Central export point for all TypeScript types
- */
+export interface ResponseStructure<T = unknown> {
+  responseStatus: 'SUCCESS' | 'FAILURE';
+  responseMessage: string;
+  responseObject: T | null;
+}
 
-export interface ResponseStructure<T = any> {
-  result: {
-    status: 'SUCCESS' | 'FAILURE';
-    message: string;
+export interface AuthResponseStructure<T = unknown> {
+  responseStatus: 'SUCCESS' | 'FAILURE';
+  messages: {
+    informationMessages: string[];
+    warningMessages: string[];
+    errorMessages: string[];
   };
-  data: T;
+  payload: T | null | false;
+}
+
+export interface LoginPayload {
+  accessToken: string;
+  tokenType: 'Bearer';
+  expiresIn: number;
+  refreshToken?: string;
 }
 
 export interface Group {
@@ -36,8 +47,4 @@ export interface User {
   email?: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface AuthUser extends User {
-  token: string;
 }

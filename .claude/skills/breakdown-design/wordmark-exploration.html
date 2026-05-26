@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>breakDown — Wordmark color exploration</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="colors_and_type.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+  body {
+    background: var(--bg-page);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 48px 40px 80px;
+    min-height: 100vh;
+  }
+  .page { max-width: 1100px; margin: 0 auto; }
+  .lede h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 10px; }
+  .lede p { color: var(--fg-secondary); font-size: 14px; max-width: 620px; line-height: 1.6; margin: 0 0 36px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+
+  .option {
+    background: var(--surface-card);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    padding: 28px 32px 22px;
+    transition: all 0.2s ease;
+  }
+  .option:hover {
+    border-color: var(--border-hover);
+    background: var(--surface-card-hover);
+  }
+
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-divider);
+  }
+  .head .name {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--fg-secondary);
+  }
+  .head .tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--fg-tertiary);
+  }
+
+  /* shared wordmark sizing — matches Auth hero */
+  .wm {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 52px;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    text-align: center;
+    margin-bottom: 18px;
+  }
+
+  .sub {
+    text-align: center;
+    color: var(--fg-secondary);
+    font-size: 12px;
+    line-height: 1.5;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .recommended {
+    border-color: var(--accent-highlight);
+    background: rgba(220, 220, 170, 0.06);
+  }
+  .recommended .tag .rec { color: var(--accent-highlight); margin-right: 6px; }
+
+  /* === color treatments === */
+  /* A: current — text + function yellow */
+  .a .one { color: var(--fg-primary); }
+  .a .two { color: var(--accent-highlight); }
+
+  /* B: two-accent — keyword purple + function yellow */
+  .b .one { color: var(--accent); }
+  .b .two { color: var(--accent-highlight); }
+
+  /* C: money split — red break, green down */
+  .c .one { color: var(--money-negative); }
+  .c .two { color: var(--money-positive); }
+
+  /* D: inverted accents — yellow break, purple Down */
+  .d .one { color: var(--accent-highlight); }
+  .d .two { color: var(--accent); }
+
+  /* E: monochrome — both halves text-primary, weight contrast */
+  .e .one { color: var(--fg-primary); font-weight: 500; }
+  .e .two { color: var(--fg-primary); font-weight: 700; }
+
+  /* F: variable blue + yellow */
+  .f .one { color: var(--fg-link); }
+  .f .two { color: var(--accent-highlight); }
+
+  /* G: bracket variant — {break}.Down */
+  .g .br { color: var(--accent); font-weight: 400; }
+  .g .one { color: var(--fg-primary); }
+  .g .two { color: var(--accent-highlight); }
+
+  /* H: money split (reversed) — red break + green Down, with Down getting brighter */
+  .h .one { color: var(--money-negative); }
+  .h .two { color: var(--money-positive); font-weight: 700; }
+
+  /* size demo */
+  .sizes {
+    margin-top: 30px;
+    padding: 24px 28px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 32px;
+    justify-content: center;
+    align-items: baseline;
+  }
+  .sizes div { font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: -0.05em; line-height: 1; }
+  .sizes .s1 { font-size: 14px; }   /* sidebar */
+  .sizes .s2 { font-size: 24px; }   /* dashboard heading */
+  .sizes .s3 { font-size: 36px; }   /* mid */
+  .sizes .s4 { font-size: 56px; }   /* hero */
+  .sizes .lab { font-family: var(--font-mono); font-size: 9px; color: var(--fg-tertiary); margin-top: 4px; text-align: center; }
+
+  .footer {
+    margin-top: 36px;
+    color: var(--fg-tertiary);
+    font-size: 12px;
+    text-align: center;
+    font-family: var(--font-mono);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="lede">
+    <h1>Wordmark — color treatments</h1>
+    <p>Eight options for the breakDown wordmark, all rendered in Space Grotesk Bold at 52px. Picking one paints the wordmark everywhere — hero card, sidebar, auth pages.</p>
+  </div>
+
+  <div class="grid">
+
+    <div class="option a recommended">
+      <div class="head"><span class="name">A · current</span><span class="tag"><span class="rec">✓ live</span>text + function yellow</span></div>
+      <div class="wm"><span class="one">break</span><span class="two">Down</span></div>
+      <div class="sub">Calm. The yellow earns its place by also being the active-tab and nav-active color. Most editor-native.</div>
+    </div>
+
+    <div class="option b">
+      <div class="head"><span class="name">B · two-accent</span><span class="tag">keyword purple + yellow</span></div>
+      <div class="wm"><span class="one">break</span><span class="two">Down</span></div>
+      <div class="sub">Uses both brand accents in the mark. Bolder, but risks competing with the primary CTA buttons (also keyword purple).</div>
+    </div>
+
+    <div class="option c">
+      <div class="head"><span class="name">C · money split</span><span class="tag">red break + green Down</span></div>
+      <div class="wm"><span class="one">break</span><span class="two">Down</span></div>
+      <div class="sub">Your suggestion. Tells the brand story: "break" = debt (red), "Down" = settled (green). Risk: red+green elsewhere lose their unique meaning if the mark also uses them.</div>
+    </div>
+
+    <div class="option d">
+      <div class="head"><span class="name">D · inverted</span><span class="tag">yellow break + purple Down</span></div>
+      <div class="wm"><span class="one">break</span><span class="two">Down</span></div>
+      <div class="sub">Quirky. Reads slightly off because the brighter half comes first — eye lands on "break" not "Down".</div>
+    </div>
+
+    <div class="option e">
+      <div class="head"><span class="name">E · monochrome</span><span class="tag">weight contrast only</span></div>
+      <div class="wm"><span class="one">break</span><span class="two">Down</span></div>
+      <div class="sub">Quietest. The "Down" half is heavier weight, no color. Lets the brand wordmark sit completely flat and rely on type alone.</div>
+    </div>
+
+    <div class="option f">
+      <div class="head"><span class="name">F · info blue + yellow</span><span class="tag">variable + function</span></div>
+      <div class="wm"><span class="one">break</span><span class="two">Down</span></div>
+      <div class="sub">Two cool tones. Sits well on the dark base but loses the "warm purple-grey" feel of the broader IDE palette.</div>
+    </div>
+
+    <div class="option g">
+      <div class="head"><span class="name">G · bracket treatment</span><span class="tag">explicit JSON cue</span></div>
+      <div class="wm"><span class="br">{</span><span class="one">break</span><span class="br">}</span>.<span class="two">Down</span></div>
+      <div class="sub">Pushes the editor metaphor further — object access syntax. Risk: too costumey, less wordmark-like.</div>
+    </div>
+
+    <div class="option h">
+      <div class="head"><span class="name">H · money split (heavier Down)</span><span class="tag">red + bold green</span></div>
+      <div class="wm"><span class="one">break</span><span class="two">Down</span></div>
+      <div class="sub">C, but "Down" gets weight 700 vs 500 to anchor the eye on resolution, not the problem.</div>
+    </div>
+
+  </div>
+
+  <div class="sizes">
+    <div><div class="s1"><span class="one" style="color:var(--fg-primary)">break</span><span style="color:var(--accent-highlight)">Down</span></div><div class="lab">14 · sidebar</div></div>
+    <div><div class="s2"><span style="color:var(--fg-primary)">break</span><span style="color:var(--accent-highlight)">Down</span></div><div class="lab">24 · h-title</div></div>
+    <div><div class="s3"><span style="color:var(--fg-primary)">break</span><span style="color:var(--accent-highlight)">Down</span></div><div class="lab">36 · marketing</div></div>
+    <div><div class="s4"><span style="color:var(--fg-primary)">break</span><span style="color:var(--accent-highlight)">Down</span></div><div class="lab">56 · hero</div></div>
+  </div>
+
+  <div class="footer">// option A shown across the size scale — easy to compare against if you pick another.</div>
+</div>
+</body>
+</html>

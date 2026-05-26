@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiClient } from '@/lib/api-client';
+import { groupViewApiClient, groupAdminApiClient } from '@/lib/api-client';
 import { handleResponseStructure } from '@/lib/response-handler';
 
 export async function GET(
@@ -7,17 +7,17 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const token = request.cookies.get('access-token')?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const axiosResponse = await apiClient.get(`/expenses/${params.id}`, {
+    const axiosResponse = await groupViewApiClient.get(`/expenses/${params.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const { data } = handleResponseStructure(axiosResponse.data);
+    const data = handleResponseStructure(axiosResponse.data);
     return NextResponse.json(data);
   } catch (error: any) {
     console.error(`Get expense ${params.id} error:`, error.message);
@@ -33,7 +33,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const token = request.cookies.get('access-token')?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -41,11 +41,11 @@ export async function PUT(
 
     const body = await request.json();
 
-    const axiosResponse = await apiClient.put(`/expenses/${params.id}`, body, {
+    const axiosResponse = await groupAdminApiClient.put(`/expenses/${params.id}`, body, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const { data } = handleResponseStructure(axiosResponse.data);
+    const data = handleResponseStructure(axiosResponse.data);
     return NextResponse.json(data);
   } catch (error: any) {
     console.error(`Update expense ${params.id} error:`, error.message);
@@ -61,13 +61,13 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const token = request.cookies.get('access-token')?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const axiosResponse = await apiClient.delete(`/expenses/${params.id}`, {
+    const axiosResponse = await groupAdminApiClient.delete(`/expenses/${params.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

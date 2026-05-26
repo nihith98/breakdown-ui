@@ -1,0 +1,72 @@
+<!doctype html>
+<!-- @dsCard group="Components" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; }
+  body {
+    background: var(--bg-page);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    padding: 18px 28px;
+  }
+  .panel {
+    background: var(--surface-card);
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.8;
+    color: #d1d5db;
+  }
+  .bracket { color: var(--accent); user-select: none; }
+  .row {
+    display: flex;
+    align-items: center;
+    padding: 4px 0;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .row:last-child { border-bottom: none; }
+  .content { flex: 1; display: flex; justify-content: space-between; gap: 14px; }
+  .name { color: var(--fg-primary); }
+  .who { color: var(--fg-secondary); font-size: 12px; }
+  .amt { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .neg { color: var(--money-negative); }
+  .pos { color: var(--money-positive); }
+</style>
+</head>
+<body>
+  <div class="panel">
+    <span class="bracket">[</span>
+    <div class="row">
+      <span class="bracket">{</span>
+      <div class="content">
+        <span><span class="name">"Dinner @ Nobu"</span> · <span class="who">Alex paid · 3</span></span>
+        <span class="amt neg">-$42.33</span>
+      </div>
+      <span class="bracket">},</span>
+    </div>
+    <div class="row">
+      <span class="bracket">{</span>
+      <div class="content">
+        <span><span class="name">"Lyft from JFK"</span> · <span class="who">You paid · 4</span></span>
+        <span class="amt pos">+$18.20</span>
+      </div>
+      <span class="bracket">},</span>
+    </div>
+    <div class="row">
+      <span class="bracket">{</span>
+      <div class="content">
+        <span><span class="name">"Groceries · Whole Foods"</span> · <span class="who">Sam paid · 4</span></span>
+        <span class="amt neg">-$16.78</span>
+      </div>
+      <span class="bracket">}</span>
+    </div>
+    <span class="bracket">]</span>
+  </div>
+</body>
+</html>

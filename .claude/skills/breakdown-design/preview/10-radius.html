@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- @dsCard group="Spacing" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; }
+  body {
+    background: var(--bg-page);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    padding: 32px 36px;
+    box-sizing: border-box;
+  }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: end; }
+  .demo {
+    background: rgba(203,166,247,0.18);
+    border: 1px solid var(--border-default);
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fg-secondary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--fg-secondary); margin-top: 10px; }
+  .sub { font-family: var(--font-mono); font-size: 11px; color: var(--fg-tertiary); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div>
+      <div class="demo" style="border-radius: 4px;">4 px</div>
+      <div class="lbl">--radius-sm</div>
+      <div class="sub">inputs · tags</div>
+    </div>
+    <div>
+      <div class="demo" style="border-radius: 8px;">8 px</div>
+      <div class="lbl">--radius-md</div>
+      <div class="sub">buttons · cards</div>
+    </div>
+    <div>
+      <div class="demo" style="border-radius: 12px;">12 px</div>
+      <div class="lbl">--radius-lg</div>
+      <div class="sub">large containers</div>
+    </div>
+  </div>
+</body>
+</html>

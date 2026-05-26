@@ -1,25 +1,39 @@
+import styles from './auth.module.css';
+
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-      background: '#efe9da',
-    }}>
-      <div style={{
-        background: '#fff',
-        padding: '3rem',
-        borderRadius: '0.5rem',
-        border: '1px solid #ddd',
-        width: '100%',
-        maxWidth: '400px',
-      }}>
-        {children}
+    <div className={styles.wrapper}>
+      <div className={styles.page}>
+        <div className={styles.container}>
+          <div className={styles.hero}>
+            <div className={styles.heroCard}>
+              <div className={styles.logo}>
+                <span className={styles.logoBreak}>break</span>
+                <span className={styles.logoDown}>Down</span>
+              </div>
+              <p className={styles.tagline}>Privacy-first expense splitting with friends and family</p>
+              <div className={styles.taglineFooter}>
+                <div className={styles.taglineFooterItem}>username only.</div>
+                <div className={styles.taglineFooterItem}>no email · no phone · no tracking.</div>
+                <div className={`${styles.taglineFooterItem} ${styles.taglineVersion}`}>v0.1.0</div>
+              </div>
+            </div>
+          </div>
+          <div className={styles.formPanel}>
+            {children}
+          </div>
+        </div>
+      </div>
+      <div className={styles.statusBar}>
+        <div className={styles.statusBarContent}>
+          <span className={styles.statusBarVersion}>v0.1.0</span>
+          <span className={styles.statusBarDivider}>·</span>
+          <span className={styles.statusBarText}>username only</span>
+        </div>
       </div>
     </div>
   );

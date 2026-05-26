@@ -1,0 +1,59 @@
+<!doctype html>
+<!-- @dsCard group="Colors" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg-page);
+    font-family: var(--font-sans);
+    padding: 28px 36px;
+    color: var(--fg-primary);
+    box-sizing: border-box;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .signal {
+    border-radius: 8px;
+    padding: 18px 20px;
+    border: 1px solid;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .signal .label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--fg-secondary);
+  }
+  .signal .amount {
+    font-family: var(--font-mono);
+    font-size: 30px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .signal .hex { font-family: var(--font-mono); font-size: 11px; color: var(--fg-secondary); }
+  .neg { background: rgba(244,135,113,0.10); border-color: rgba(244,135,113,0.40); }
+  .neg .amount { color: var(--money-negative); }
+  .pos { background: rgba(166,227,161,0.10); border-color: rgba(166,227,161,0.40); }
+  .pos .amount { color: var(--money-positive); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="signal neg">
+      <span class="label">You owe</span>
+      <span class="amount">-$245.50</span>
+      <span class="hex">#f48771 · string-error tone</span>
+    </div>
+    <div class="signal pos">
+      <span class="label">Owed to you</span>
+      <span class="amount">+$128.75</span>
+      <span class="hex">#a6e3a1 · test-pass green</span>
+    </div>
+  </div>
+</body>
+</html>

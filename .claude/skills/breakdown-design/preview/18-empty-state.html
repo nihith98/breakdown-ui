@@ -1,0 +1,57 @@
+<!doctype html>
+<!-- @dsCard group="Components" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; }
+  body {
+    background: var(--bg-page);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    padding: 24px 32px;
+    box-sizing: border-box;
+  }
+  .empty {
+    text-align: center;
+    padding: 30px 20px;
+    border: 1px dashed var(--border-default);
+    border-radius: 12px;
+    background: var(--surface-card);
+  }
+  .empty h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--fg-primary);
+    margin: 0 0 6px 0;
+  }
+  .empty p {
+    font-size: 14px;
+    color: var(--fg-secondary);
+    margin: 0 0 14px 0;
+    line-height: 1.5;
+  }
+  .empty .cta {
+    background: var(--accent);
+    color: var(--fg-on-accent);
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+  <div class="empty">
+    <h3>This group is quiet.</h3>
+    <p>Add an expense to get started. Who paid? How much? Who benefits?</p>
+    <button class="cta">+ Add expense</button>
+  </div>
+</body>
+</html>

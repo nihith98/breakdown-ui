@@ -1,0 +1,20 @@
+
+> breakdown-ui@1.0.0 dev
+> next dev
+
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.0.183:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 3.3s
+ ○ Compiling / ...
+ ✓ Compiled / in 2.1s (605 modules)
+ GET / 200 in 2673ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 992ms (633 modules)
+ GET /login 200 in 1250ms
+ ✓ Compiled in 380ms (621 modules)
+ GET /login 200 in 274ms
+[?25h

@@ -1,0 +1,47 @@
+<!doctype html>
+<!-- @dsCard group="Components" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; }
+  body {
+    background: var(--bg-page);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    padding: 24px 28px;
+    box-sizing: border-box;
+  }
+  .panel {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-lavender);
+    border-radius: 12px;
+    padding: 18px 20px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--fg-secondary);
+    max-width: 580px;
+    line-height: 1.7;
+  }
+  .row { display: flex; justify-content: space-between; gap: 16px; }
+  .row .k { color: var(--fg-secondary); }
+  .row .v { color: var(--fg-primary); }
+  .ok { color: var(--money-positive); }
+  hr { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 8px 0; }
+  .footer { font-size: 11px; color: var(--fg-tertiary); margin-top: 6px; }
+</style>
+</head>
+<body>
+  <div class="panel">
+    <div class="row"><span class="k">// frontend</span><span class="v">v0.1.0</span></div>
+    <div class="row"><span class="k">settlement-engine</span><span class="v">v0.8.1</span></div>
+    <div class="row"><span class="k">api</span><span class="v">v2</span></div>
+    <hr/>
+    <div class="row"><span class="k">data-ownership</span><span class="v ok">100% yours</span></div>
+    <div class="row"><span class="k">telemetry</span><span class="v ok">none</span></div>
+    <div class="row"><span class="k">third-party-sharing</span><span class="v ok">none</span></div>
+    <div class="footer">Built with precision. No telemetry. Just transparency.</div>
+  </div>
+</body>
+</html>

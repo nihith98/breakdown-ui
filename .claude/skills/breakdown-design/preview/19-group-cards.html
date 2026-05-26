@@ -1,0 +1,59 @@
+<!doctype html>
+<!-- @dsCard group="Components" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; }
+  body {
+    background: var(--bg-page);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    padding: 22px 28px;
+    box-sizing: border-box;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .group {
+    background: var(--surface-card);
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.3s ease;
+  }
+  .group:hover { background: var(--surface-card-hover); border-color: var(--border-hover); transform: translateY(-2px); }
+  .group .hd { display: flex; justify-content: space-between; align-items: baseline; }
+  .group .title { font-size: 15px; font-weight: 600; }
+  .group .tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: var(--accent-highlight);
+    background: rgba(220,220,170,0.12);
+    border: 1px solid rgba(220,220,170,0.35);
+  }
+  .group .meta { font-family: var(--font-mono); font-size: 11px; color: var(--fg-secondary); }
+  .group .bal { font-family: var(--font-mono); font-weight: 600; font-size: 14px; }
+  .neg { color: var(--money-negative); }
+  .pos { color: var(--money-positive); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="group">
+      <div class="hd"><span class="title">Sept Hawaii trip</span></div>
+      <div class="meta">4 members · 12 expenses</div>
+      <div class="bal neg">You owe -$245.50</div>
+    </div>
+    <div class="group">
+      <div class="hd"><span class="title">The Lees</span><span class="tag">family</span></div>
+      <div class="meta">5 members · 31 expenses</div>
+      <div class="bal pos">Owed to you +$128.75</div>
+    </div>
+  </div>
+</body>
+</html>

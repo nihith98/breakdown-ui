@@ -1,0 +1,42 @@
+<!doctype html>
+<!-- @dsCard group="Type" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; }
+  body {
+    background: var(--bg-page);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    padding: 28px 36px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .card { padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-default); background: var(--surface-card); }
+  .lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--fg-secondary); margin-bottom: 8px; }
+  .amount-lg { font-family: var(--font-mono); font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+  .amount-md { font-family: var(--font-mono); font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; gap: 12px; }
+  .row .desc { font-family: var(--font-mono); font-size: 13px; color: var(--fg-primary); }
+  .row .desc em { font-style: italic; color: var(--fg-secondary); }
+  .neg { color: var(--money-negative); }
+  .pos { color: var(--money-positive); }
+  .neu { color: var(--money-neutral); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="card">
+      <div class="lbl">Net balance</div>
+      <div class="amount-lg neg">-$116.75</div>
+    </div>
+    <div class="card">
+      <div class="lbl">Ledger</div>
+      <div class="row"><span class="desc">"Dinner @ Nobu" <em>· alex</em></span><span class="amount-md neg">-$42.33</span></div>
+      <div class="row"><span class="desc">"Lyft from JFK" <em>· you</em></span><span class="amount-md pos">+$18.20</span></div>
+      <div class="row"><span class="desc">"Hotel split" <em>· sam</em></span><span class="amount-md neu">$0.00</span></div>
+    </div>
+  </div>
+</body>
+</html>

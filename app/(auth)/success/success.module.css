@@ -1,0 +1,52 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.subtext {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.button {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.button:hover {
+  background: var(--btn-hover-bg);
+  transform: translateY(-1px);
+}
+
+.button:active {
+  background: var(--btn-active-bg);
+  transform: translateY(0);
+}

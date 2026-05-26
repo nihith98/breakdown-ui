@@ -1,0 +1,45 @@
+<!doctype html>
+<!-- @dsCard group="Colors" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg-page);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    padding: 22px 28px;
+    box-sizing: border-box;
+  }
+  .panel {
+    background: var(--surface-card);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.9;
+  }
+  .row { display: flex; align-items: center; gap: 12px; }
+  .swatch {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .role { color: var(--fg-tertiary); font-size: 11px; margin-left: auto; }
+</style>
+</head>
+<body>
+  <div class="panel">
+    <div class="row"><span class="swatch" style="background:#c586c0;"></span><span style="color:#c586c0;">keyword</span><span class="role">primary accent · brand</span></div>
+    <div class="row"><span class="swatch" style="background:#dcdcaa;"></span><span style="color:#dcdcaa;">function</span><span class="role">highlight · active states</span></div>
+    <div class="row"><span class="swatch" style="background:#ce9178;"></span><span style="color:#ce9178;">string</span><span class="role">transaction names</span></div>
+    <div class="row"><span class="swatch" style="background:#a6e3a1;"></span><span style="color:#a6e3a1;">number</span><span class="role">positive money</span></div>
+    <div class="row"><span class="swatch" style="background:#6a9955;"></span><span style="color:#6a9955;">comment</span><span class="role">muted meta · `// …`</span></div>
+    <div class="row"><span class="swatch" style="background:#9cdcfe;"></span><span style="color:#9cdcfe;">variable</span><span class="role">links · info</span></div>
+    <div class="row"><span class="swatch" style="background:#4ec9b0;"></span><span style="color:#4ec9b0;">type</span><span class="role">reserved · tag accents</span></div>
+  </div>
+</body>
+</html>

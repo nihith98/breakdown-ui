@@ -1,6 +1,6 @@
 'use server';
 
-import { apiClient } from '@/lib/api-client';
+import { groupAdminApiClient } from '@/lib/api-client';
 import { handleResponseStructure } from '@/lib/response-handler';
 
 export async function addExpense(
@@ -13,11 +13,8 @@ export async function addExpense(
   }
 ) {
   try {
-    // Note: In a real app, you'd get the token from cookies
-    // This is a simplified example
-    const axiosResponse = await apiClient.post(`/groups/${groupId}/expenses`, input);
-    const { data } = handleResponseStructure(axiosResponse.data);
-    return data;
+    const axiosResponse = await groupAdminApiClient.post(`/groups/${groupId}/expenses`, input);
+    return handleResponseStructure(axiosResponse.data);
   } catch (error: any) {
     throw new Error(error.message || 'Failed to add expense');
   }

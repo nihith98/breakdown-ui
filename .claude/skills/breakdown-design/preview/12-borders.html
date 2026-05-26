@@ -1,0 +1,62 @@
+<!doctype html>
+<!-- @dsCard group="Spacing" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body { margin: 0; }
+  body {
+    background: var(--bg-page);
+    color: var(--fg-primary);
+    font-family: var(--font-sans);
+    padding: 28px 36px;
+    box-sizing: border-box;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .item { display: flex; flex-direction: column; gap: 6px; }
+  .lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--fg-secondary); }
+  .meta { font-family: var(--font-mono); font-size: 11px; color: var(--fg-tertiary); }
+  .border-demo {
+    height: 60px;
+    border-radius: 6px;
+    background: var(--surface-card);
+  }
+  .b-default { border: 1px solid rgba(203,166,247,0.15); }
+  .b-hover   { border: 1px solid rgba(203,166,247,0.35); }
+  .b-strong  { border: 1px solid rgba(255,255,255,0.12); }
+  .b-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    border-radius: 0;
+    height: 1px;
+    margin-top: 30px;
+    background: transparent;
+  }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="item">
+      <div class="lbl">Default border</div>
+      <div class="border-demo b-default"></div>
+      <div class="meta">1px · rgba(203,166,247,0.15)</div>
+    </div>
+    <div class="item">
+      <div class="lbl">Hover border</div>
+      <div class="border-demo b-hover"></div>
+      <div class="meta">1px · rgba(203,166,247,0.35)</div>
+    </div>
+    <div class="item">
+      <div class="lbl">Strong (panel chrome)</div>
+      <div class="border-demo b-strong"></div>
+      <div class="meta">1px · rgba(255,255,255,0.12)</div>
+    </div>
+    <div class="item">
+      <div class="lbl">Row divider</div>
+      <div class="border-demo b-divider"></div>
+      <div class="meta">1px top · rgba(255,255,255,0.06)</div>
+    </div>
+  </div>
+</body>
+</html>

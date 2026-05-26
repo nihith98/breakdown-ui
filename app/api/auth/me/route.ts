@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { apiClient } from '@/lib/api-client';
+import { authApiClient } from '@/lib/api-client';
 import { handleResponseStructure } from '@/lib/response-handler';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const token = request.cookies.get('access-token')?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Call Java backend to verify token and get user info
-    const response = await apiClient.get('/auth/me', {
+    const response = await authApiClient.get('/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const { data } = handleResponseStructure(response.data);
-    return NextResponse.json(data);
+    const user = handleResponseStructure(response.data);
+    return NextResponse.json(user);
   } catch (error: any) {
     console.error('Get current user error:', error.message);
     return NextResponse.json(
