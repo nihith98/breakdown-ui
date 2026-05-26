@@ -1,4 +1,5 @@
 import styles from './auth.module.css';
+import { ThemeToggle } from './theme-toggle';
 
 export default function AuthLayout({
   children,
@@ -30,29 +31,34 @@ export default function AuthLayout({
       </div>
       <div className={styles.statusBar}>
         <div className={styles.statusBarContent}>
-          <span className={styles.statusBarVersion}>v 0.1.0</span>
-          <span className={styles.statusBarDivider}>·</span>
-          <span className={styles.statusBarText}>no telemetry</span>
-          <span className={styles.statusBarDivider}>·</span>
-          <a
-            href="https://github.com/nihith98/breakdown-project"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.statusBarLink}
-            title="View on GitHub"
-          >
-            feedback
-          </a>
-          <span className={styles.statusBarDivider}>·</span>
-          <a
-            href="https://www.linkedin.com/in/nihith-sistla-65314414b"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.statusBarLink}
-            title="Connect on LinkedIn"
-          >
-            connect
-          </a>
+          <div className={styles.statusBarLeft}>
+            <span className={styles.statusBarVersion}>v 0.1.0</span>
+            <span className={styles.statusBarDivider}>·</span>
+            <span className={styles.statusBarTelemetry}>no telemetry</span>
+          </div>
+          <div className={styles.statusBarRight}>
+            <a
+              href="https://github.com/nihith98/breakdown-project"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.statusBarLink}
+              title="View on GitHub"
+            >
+              feedback
+            </a>
+            <span className={styles.statusBarDivider}>·</span>
+            <a
+              href="https://www.linkedin.com/in/nihith-sistla-65314414b"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.statusBarLink}
+              title="Connect on LinkedIn"
+            >
+              connect
+            </a>
+            <span className={styles.statusBarDivider}>·</span>
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </div>

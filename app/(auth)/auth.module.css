@@ -157,7 +157,7 @@
 
 .statusBar {
   height: 3rem;
-  background: var(--surface-card);
+  background: var(--surface-panel);
   border-top: 1px solid var(--border-default);
   display: flex;
   align-items: center;
@@ -169,10 +169,25 @@
 .statusBarContent {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1100px;
+  gap: 1rem;
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--fg-tertiary);
+}
+
+.statusBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statusBarRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .statusBarVersion {
@@ -184,9 +199,11 @@
   opacity: 0.5;
 }
 
-.statusBarText {
+.statusBarTelemetry {
+  color: var(--syntax-comment);
   letter-spacing: 0.6px;
-  text-transform: uppercase;
+  text-transform: lowercase;
+  font-style: italic;
 }
 
 .statusBarLink {
@@ -203,4 +220,29 @@
 .statusBarLink:focus {
   outline: 1px solid var(--accent);
   outline-offset: 2px;
+}
+
+.statusBarThemeToggle {
+  background: none;
+  border: none;
+  color: var(--fg-link);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  transition: color var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.statusBarThemeToggle:hover {
+  color: var(--accent-highlight);
+}
+
+.statusBarThemeToggle:focus {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
