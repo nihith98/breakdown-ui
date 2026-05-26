@@ -23,17 +23,23 @@ export function ThemeToggle() {
   };
 
   if (!mounted) {
-    return <button className={styles.statusBarThemeToggle} aria-label="Toggle theme" disabled>☀️</button>;
+    return (
+      <button className={styles.statusBarThemeToggle} aria-label="Toggle theme" disabled>
+        <span className={styles.statusBarThemeEmoji}>☀️</span>
+        <span className={styles.statusBarThemeLabel}>light</span>
+      </button>
+    );
   }
 
   return (
     <button
       className={styles.statusBarThemeToggle}
       onClick={toggleTheme}
-      title="Toggle theme"
-      aria-label="Toggle theme"
+      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
     >
-      {isDark ? '☀️' : '🌙'}
+      <span className={styles.statusBarThemeEmoji}>{isDark ? '☀️' : '🌙'}</span>
+      <span className={styles.statusBarThemeLabel}>{isDark ? 'light' : 'dark'}</span>
     </button>
   );
 }
