@@ -52,7 +52,7 @@ export default function LoginPage() {
 
     try {
       await loginUser(username, password);
-      router.push('/auth/success');
+      router.push('/success');
     } catch (err: any) {
       if (err.name === 'AbortError') {
         setBannerError('Request timeout. Try again?');
