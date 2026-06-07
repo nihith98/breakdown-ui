@@ -153,6 +153,7 @@
   --money-neutral: var(--raw-yellow-fn);
 
   --signal-success: var(--raw-green-bright);
+  --signal-success-tint: rgba(166, 227, 161, 0.15);
   --signal-error: var(--raw-red-error);
   --signal-error-tint: rgba(244, 135, 113, 0.12);
 
@@ -218,6 +219,7 @@
   --money-neutral: #b45309;
 
   --signal-success: #15803d;
+  --signal-success-tint: rgba(21, 128, 61, 0.12);
   --signal-error: #b91c1c;
   --signal-error-tint: rgba(185, 28, 28, 0.08);
 

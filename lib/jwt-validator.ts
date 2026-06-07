@@ -5,7 +5,7 @@
  * Automatically validates standard claims: exp, iat, nbf
  */
 
-import { jwtVerify } from 'jose';
+import { jwtVerify, importSPKI } from 'jose';
 import { getPublicKey } from './jwt-config';
 
 export interface ValidatedTokenPayload {
@@ -34,13 +34,17 @@ export interface ValidatedTokenPayload {
 export async function validateJWT(token: string): Promise<ValidatedTokenPayload> {
   try {
     // Get public key (from cache or JWKS endpoint)
-    const publicKeyPEM = await getPublicKey();
-    const encoder = new TextEncoder();
-    const publicKeyBuffer = encoder.encode(publicKeyPEM);
+    let publicKeyPEM = await getPublicKey();
+
+    // Handle escaped newlines in environment variable format (e.g., from .env file)
+    publicKeyPEM = publicKeyPEM.replace(/\\n/g, '\n');
+
+    // Convert PEM to KeyObject for jose
+    const publicKey = await importSPKI(publicKeyPEM, 'RS256');
 
     // Verify signature and validate claims
     // jose automatically validates: exp, iat, nbf
-    const verified = await jwtVerify(token, publicKeyBuffer, {
+    const verified = await jwtVerify(token, publicKey, {
       algorithms: ['RS256'],
     });
 

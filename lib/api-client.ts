@@ -7,6 +7,11 @@ let refreshPromise: Promise<string | null> | null = null;
 
 async function refreshTokenIfNeeded() {
   try {
+    // Skip token refresh on server side (localStorage not available)
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     // Get token expiry from localStorage
     const tokenExpiry = localStorage.getItem('token_expiry');
     if (!tokenExpiry) return; // No token or no expiry info
@@ -75,7 +80,7 @@ function createClient(basePath: string) {
 
 export const authApiClient = createClient(process.env.AUTH_BASE_URL || '/authentication-svc');
 export const registrationApiClient = createClient(process.env.REGISTRATION_BASE_URL || '/authentication-svc');
-export const groupAdminApiClient = createClient(process.env.GROUP_ADMIN_BASE_URL || '/group-admin-svc');
+export const groupAdminApiClient = createClient(process.env.GROUP_ADMIN_BASE_URL || '/breakdown-dashboard-svc');
 export const groupViewApiClient = createClient(process.env.GROUP_VIEW_BASE_URL || '/group-view-svc');
 
 export default authApiClient;

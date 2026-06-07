@@ -89,3 +89,10 @@ export const LinkIcon = ({ size = 14, className }: IconProps) =>
       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
     </>
   ));
+
+export const CheckIcon = ({ size = 24, className }: IconProps) =>
+  svg(size, className, (
+    <>
+      <polyline points="20 6 9 17 4 12" />
+    </>
+  ));

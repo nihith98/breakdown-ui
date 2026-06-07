@@ -7,6 +7,7 @@ import {
   GroupStatusFilterKey,
   SortDirection,
   CreateGroupInput,
+  CreateGroupResponse,
 } from '@/types/index';
 import { matchesStatus, sortGroups } from '@/lib/group-format';
 import { GroupsToolbar } from '@/components/dashboard/GroupsToolbar';
@@ -72,7 +73,7 @@ export default function GroupsPage() {
     return sortGroups(filtered, sortKey, sortDir);
   }, [groups, query, filter, sortKey, sortDir]);
 
-  const handleCreate = async (input: CreateGroupInput) => {
+  const handleCreate = async (input: CreateGroupInput): Promise<CreateGroupResponse> => {
     const res = await fetch('/api/groups', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -80,9 +81,14 @@ export default function GroupsPage() {
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || 'Could not create group.');
+      throw new Error(body.error || body.message || 'Could not create group.');
+    }
+    const data = await res.json();
+    if (data.error) {
+      throw new Error(data.error);
     }
     await load();
+    return data;
   };
 
   const handleJoin = async (code: string) => {
@@ -96,6 +102,13 @@ export default function GroupsPage() {
       throw new Error(body.error || 'No group matches that code.');
     }
     await load();
+    return { groupId: '', groupName: 'Group' };
+  };
+
+  const handleViewGroup = (groupId: string) => {
+    // Navigate to group detail page if needed, or just close the modal
+    // For now, just reload the groups list
+    load();
   };
 
   const emptyState = (() => {
@@ -170,7 +183,12 @@ export default function GroupsPage() {
         onClose={() => setCreateOpen(false)}
         onCreate={handleCreate}
       />
-      <JoinGroupModal open={joinOpen} onClose={() => setJoinOpen(false)} onJoin={handleJoin} />
+      <JoinGroupModal
+        open={joinOpen}
+        onClose={() => setJoinOpen(false)}
+        onJoin={handleJoin}
+        onViewGroup={handleViewGroup}
+      />
     </>
   );
 }

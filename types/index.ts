@@ -74,8 +74,19 @@ export type GroupSortKey = 'recent' | 'name' | 'amount';
 export type SortDirection = 'desc' | 'asc';
 
 export interface CreateGroupInput {
-  name: string;
-  description: string;
+  groupName: string;
+  groupDescription: string;
+}
+
+export interface CreateGroupResponse {
+  groupId: string;
+  joiningCode: string;
+  groupName: string;
+  createdById: string | null;
+  personList: string[];
+  familyList: string[] | null;
+  groupDescription: string;
+  operation: string | null;
 }
 
 export interface GroupSummary {
