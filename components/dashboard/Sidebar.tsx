@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { logoutAction } from '@/app/(dashboard)/actions';
+import { LogoutLoader } from '@/app/components/LogoutLoader';
 import styles from '@/app/(dashboard)/dashboard.module.css';
 
 interface SidebarProps {
@@ -11,6 +13,7 @@ interface SidebarProps {
 
 export function Sidebar({ displayName }: SidebarProps) {
   const pathname = usePathname();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const getInitial = () => displayName.charAt(0).toUpperCase();
 
@@ -30,11 +33,20 @@ export function Sidebar({ displayName }: SidebarProps) {
   ];
 
   const handleLogout = async () => {
-    await logoutAction();
+    try {
+      setIsLoggingOut(true);
+      await logoutAction();
+      // logoutAction() handles redirect, so execution doesn't continue here
+    } catch (error) {
+      console.error('Logout failed:', error);
+      setIsLoggingOut(false);
+    }
   };
 
   return (
-    <nav className={styles.sidebar}>
+    <>
+      <LogoutLoader isVisible={isLoggingOut} />
+      <nav className={styles.sidebar}>
       <div className={styles.sidebarInner}>
         {/* User Chip */}
         <div className={styles.userChip}>
@@ -63,15 +75,17 @@ export function Sidebar({ displayName }: SidebarProps) {
         {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className={styles.logoutBtn}
+          disabled={isLoggingOut}
+          className={`${styles.logoutBtn} ${isLoggingOut ? styles.loading : ''}`}
           aria-label="Log out"
-          title="Log out"
+          title={isLoggingOut ? 'Logging out...' : 'Log out'}
         >
           <LogoutIcon />
-          <span>Log out</span>
+          <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
         </button>
       </div>
     </nav>
+    </>
   );
 }
 
