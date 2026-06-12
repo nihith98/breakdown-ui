@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { groupViewApiClient, groupAdminApiClient } from '@/lib/api-client';
 import { handleResponseStructure } from '@/lib/response-handler';
+import { Group } from '@/types';
 
 export async function GET(
   request: NextRequest,
@@ -17,14 +18,11 @@ export async function GET(
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const data = handleResponseStructure(axiosResponse.data);
+    const data = handleResponseStructure<Group>(axiosResponse.data);
     return NextResponse.json(data);
-  } catch (error: any) {
-    console.error(`Get group ${params.id} error:`, error.message);
-    return NextResponse.json(
-      { error: 'Failed to fetch group' },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch group';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -45,13 +43,10 @@ export async function PUT(
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const data = handleResponseStructure(axiosResponse.data);
+    const data = handleResponseStructure<Group>(axiosResponse.data);
     return NextResponse.json(data);
-  } catch (error: any) {
-    console.error(`Update group ${params.id} error:`, error.message);
-    return NextResponse.json(
-      { error: error.message || 'Failed to update group' },
-      { status: 400 }
-    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to update group';
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

@@ -1,0 +1,204 @@
+/* =========================================================
+ * GroupHeader — group detail page header section.
+ * 6 compact rows stacked at gap:2px to stay under ~33% height.
+ * ========================================================= */
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+  padding-bottom: var(--space-lg);
+}
+
+/* ===== Row 1: back link ===== */
+.backLink {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--type-code-sm);
+  color: var(--fg-tertiary);
+  padding: 0 0 var(--space-xs);
+  margin: 0;
+  text-align: left;
+  align-self: flex-start;
+  transition: color var(--transition-fast);
+}
+.backLink:hover { color: var(--fg-secondary); }
+
+/* ===== Row 2: group name ===== */
+.groupName {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  font-weight: var(--weight-bold);
+  color: var(--fg-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Row 3: description comment ===== */
+.description {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--type-code-sm);
+  color: var(--syntax-comment);
+}
+.commentSlash { opacity: 0.7; }
+
+/* ===== Row 4: stats ===== */
+.stats {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--type-code-sm);
+  color: var(--fg-tertiary);
+}
+.statNum { color: var(--syntax-number); }
+.statSep { opacity: 0.5; }
+
+/* ===== Row 5: summary card ===== */
+.summaryCard {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-left-width: 2px;
+  margin-top: var(--space-xs);
+}
+/* Left accent bar — sign-coded */
+.summaryCard[data-sign="positive"] { border-left-color: var(--money-positive); }
+.summaryCard[data-sign="negative"] { border-left-color: var(--money-negative); }
+.summaryCard[data-sign="neutral"]  { border-left-color: var(--money-neutral); }
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-card-lavender);
+  border: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: var(--type-code-sm);
+  font-weight: var(--weight-bold);
+  color: var(--accent-highlight);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.userDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.username {
+  font-family: var(--font-sans);
+  font-size: var(--type-code-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--fg-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.txnCount {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-tertiary);
+}
+
+.balance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.balLabel {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--fg-secondary);
+  white-space: nowrap;
+}
+
+.balAmount {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  color: var(--fg-secondary);
+}
+.balAmount[data-sign="positive"] { color: var(--money-positive); }
+.balAmount[data-sign="negative"] { color: var(--money-negative); }
+.balAmount[data-sign="neutral"]  { color: var(--money-neutral); }
+
+/* ===== Row 6: action buttons ===== */
+.actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-top: var(--space-xs);
+}
+
+.btnPrimary,
+.btnHighlight,
+.btnGhost {
+  padding: 4px 8px;
+  font-family: var(--font-sans);
+  font-size: var(--type-code-sm);
+  font-weight: var(--weight-semibold);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btnPrimary {
+  background-color: var(--accent);
+  color: var(--fg-on-accent);
+  border: 1px solid var(--accent);
+}
+.btnPrimary:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.btnPrimary:active {
+  background-color: var(--accent-active);
+  border-color: var(--accent-active);
+}
+
+.btnHighlight {
+  background-color: transparent;
+  color: var(--accent-highlight);
+  border: 1px solid var(--accent-highlight);
+}
+.btnHighlight:hover { background-color: var(--surface-card-lavender); }
+
+.btnGhost {
+  background-color: transparent;
+  color: var(--fg-secondary);
+  border: 1px solid var(--border-strong);
+}
+.btnGhost:hover {
+  border-color: var(--border-hover);
+  color: var(--fg-primary);
+}

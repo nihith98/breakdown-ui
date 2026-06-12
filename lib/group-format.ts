@@ -1,4 +1,5 @@
 import {
+  Expense,
   GroupBalanceStatus,
   GroupListItem,
   GroupSortKey,
@@ -65,4 +66,29 @@ export function sortGroups(
 export function matchesStatus(net: number, filter: 'all' | GroupBalanceStatus): boolean {
   if (filter === 'all') return true;
   return balanceStatus(net) === filter;
+}
+
+export function computeUserNet(txns: Expense[], user: string): number {
+  let net = 0;
+  txns.forEach(tx => {
+    if (!tx.splitBetween.includes(user) && tx.paidBy !== user) return;
+    const share = tx.amount / tx.splitBetween.length;
+    if (tx.paidBy === user) net += tx.amount - share;
+    else net -= share;
+  });
+  return Math.round(net * 100) / 100;
+}
+
+export function txnUserAmount(tx: Expense, user: string): number | null {
+  const involved = tx.splitBetween.includes(user);
+  const isPayer = tx.paidBy === user;
+  if (!involved && !isPayer) return null;
+  const share = tx.amount / tx.splitBetween.length;
+  return isPayer ? tx.amount - share : -share;
+}
+
+export function txnMeta(tx: Expense, user: string): string {
+  const payer = tx.paidBy === user ? 'You' : tx.paidBy;
+  const n = tx.splitBetween.length;
+  return `${payer} paid $${tx.amount.toFixed(2)} for ${n} member${n !== 1 ? 's' : ''}`;
 }

@@ -1,0 +1,21 @@
+/* =========================================================
+ * Group detail page — shell layout for header + transaction list.
+ * The parent dashboard layout already provides the 3-column
+ * shell; this module manages the main-inner flex column only.
+ * ========================================================= */
+
+.mainInner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 16px 28px 0;
+}
+
+.notFound {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--type-code-sm);
+  color: var(--syntax-comment);
+  padding: var(--space-lg) 0;
+}

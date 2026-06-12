@@ -1,64 +1,70 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { getCurrentUser } from '@/lib/auth';
+import { groupViewApiClient } from '@/lib/api-client';
+import { handleResponseStructure } from '@/lib/response-handler';
 import { Group, Expense } from '@/types';
+import { GroupHeader } from '@/components/dashboard/GroupHeader';
+import { TransactionList } from '@/components/dashboard/TransactionList';
+import styles from './group-detail.module.css';
 
-export default function GroupDetailPage({ params }: { params: { id: string } }) {
-  const [group, setGroup] = useState<Group | null>(null);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+interface Props {
+  params: { id: string };
+}
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [groupRes, expensesRes] = await Promise.all([
-          fetch(`/api/groups/${params.id}`),
-          fetch(`/api/expenses?groupId=${params.id}`),
-        ]);
+async function fetchGroup(id: string, token: string | undefined): Promise<Group | null> {
+  try {
+    const res = await groupViewApiClient.get(`/groups/${id}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    return handleResponseStructure<Group>(res.data);
+  } catch {
+    return null;
+  }
+}
 
-        if (!groupRes.ok || !expensesRes.ok) {
-          throw new Error('Failed to fetch data');
-        }
+async function fetchExpenses(groupId: string, token: string | undefined): Promise<Expense[]> {
+  try {
+    const res = await groupViewApiClient.get(`/groups/${groupId}/expenses`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    return handleResponseStructure<Expense[]>(res.data) ?? [];
+  } catch {
+    return [];
+  }
+}
 
-        const groupData = await groupRes.json();
-        const expensesData = await expensesRes.json();
+export default async function GroupDetailPage({ params }: Props) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('access-token')?.value;
+  const currentUser = await getCurrentUser();
 
-        setGroup(groupData);
-        setExpenses(Array.isArray(expensesData) ? expensesData : []);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  if (!currentUser) redirect('/login');
 
-    fetchData();
-  }, [params.id]);
+  const [group, expenses] = await Promise.all([
+    fetchGroup(params.id, token),
+    fetchExpenses(params.id, token),
+  ]);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div style={{ color: '#c33' }}>{error}</div>;
-  if (!group) return <div>Group not found</div>;
+  if (!group) {
+    return (
+      <div className={styles.mainInner}>
+        <p className={styles.notFound}>// Group not found</p>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h1>{group.name}</h1>
-      {group.description && <p>{group.description}</p>}
-
-      <h2>Expenses</h2>
-      {expenses.length === 0 ? (
-        <p>No expenses yet.</p>
-      ) : (
-        <ul style={{ listStyle: 'none' }}>
-          {expenses.map((expense) => (
-            <li key={expense.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #ddd' }}>
-              <strong>{expense.description}</strong> - ${expense.amount.toFixed(2)}
-              <br />
-              <small>Paid by: {expense.paidBy}</small>
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className={styles.mainInner}>
+      <GroupHeader
+        group={group}
+        expenses={expenses}
+        currentUser={currentUser.username}
+      />
+      <TransactionList
+        expenses={expenses}
+        currentUser={currentUser.username}
+      />
     </div>
   );
 }
