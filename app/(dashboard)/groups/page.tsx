@@ -10,6 +10,7 @@ import {
   CreateGroupResponse,
 } from '@/types/index';
 import { matchesStatus, sortGroups } from '@/lib/group-format';
+import { clientFetch } from '@/lib/client-fetch';
 import { GroupsToolbar } from '@/components/dashboard/GroupsToolbar';
 import { GroupStatusFilter } from '@/components/dashboard/GroupStatusFilter';
 import { GroupListRow } from '@/components/dashboard/GroupListRow';
@@ -34,7 +35,7 @@ export default function GroupsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/groups');
+      const res = await clientFetch('/api/groups');
       if (!res.ok) throw new Error('Could not load your groups.');
       const data = await res.json();
       setGroups(Array.isArray(data) ? data : []);
@@ -74,7 +75,7 @@ export default function GroupsPage() {
   }, [groups, query, filter, sortKey, sortDir]);
 
   const handleCreate = async (input: CreateGroupInput): Promise<CreateGroupResponse> => {
-    const res = await fetch('/api/groups', {
+    const res = await clientFetch('/api/groups', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
@@ -92,7 +93,7 @@ export default function GroupsPage() {
   };
 
   const handleJoin = async (code: string) => {
-    const res = await fetch('/api/groups/join', {
+    const res = await clientFetch('/api/groups/join', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code }),

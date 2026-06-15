@@ -29,11 +29,11 @@ export async function POST(request: NextRequest) {
     );
 
     console.log(`[Groups] Join response:`, axiosResponse.data);
-    const payload = handleAuthResponseStructure(axiosResponse.data);
+    const payload = handleAuthResponseStructure<{ groupId?: string; groupName?: string }>(axiosResponse.data);
     return NextResponse.json({
       data: null,
-      groupId: payload?.groupId || '',
-      groupName: payload?.groupName || 'Group',
+      groupId: (payload && typeof payload === 'object' && 'groupId' in payload) ? payload.groupId || '' : '',
+      groupName: (payload && typeof payload === 'object' && 'groupName' in payload) ? payload.groupName || 'Group' : 'Group',
     });
   } catch (error: any) {
     const errorMessage = error?.response?.data?.error ||

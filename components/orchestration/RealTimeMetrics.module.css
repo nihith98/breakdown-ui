@@ -1,0 +1,49 @@
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background-color: var(--surface-panel);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.metricCard {
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  text-align: center;
+  transition: border-color var(--transition-fast);
+}
+
+.metricCard:hover {
+  border-color: var(--border-hover);
+}
+
+.metricLabel {
+  font-size: var(--type-small);
+  color: var(--fg-tertiary);
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-xs);
+}
+
+.metricValue {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: var(--weight-bold);
+  color: var(--accent-highlight);
+  margin-bottom: var(--space-xs);
+}
+
+.metricValue.metricError {
+  color: var(--signal-error);
+}
+
+.metricValue.metricWarning {
+  color: #fab387;
+}
+
+.metricSub {
+  font-size: var(--type-code-sm);
+  color: var(--fg-tertiary);
+}

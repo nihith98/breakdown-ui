@@ -1,52 +1,63 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { groupViewApiClient } from '@/lib/api-client';
-import { handleResponseStructure } from '@/lib/response-handler';
-import { Group, Expense } from '@/types';
+import { Group, Transaction } from '@/types';
 import { GroupHeader } from '@/components/dashboard/GroupHeader';
 import { TransactionList } from '@/components/dashboard/TransactionList';
 import styles from './group-detail.module.css';
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-async function fetchGroup(id: string, token: string | undefined): Promise<Group | null> {
+async function serverFetch(path: string): Promise<Response> {
+  const headerStore = await headers();
+  const cookieStore = await cookies();
+  const host = headerStore.get('host') ?? 'localhost:3000';
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const cookie = cookieStore.toString();
+  return fetch(`${protocol}://${host}${path}`, {
+    headers: { cookie },
+    cache: 'no-store',
+  });
+}
+
+async function fetchGroup(id: string): Promise<Group | null> {
   try {
-    const res = await groupViewApiClient.get(`/groups/${id}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    return handleResponseStructure<Group>(res.data);
+    const res = await serverFetch(`/api/groups/${id}`);
+    if (!res.ok) return null;
+    return await res.json();
   } catch {
     return null;
   }
 }
 
-async function fetchExpenses(groupId: string, token: string | undefined): Promise<Expense[]> {
+async function fetchTransactions(id: string): Promise<{ transactions: Transaction[]; memberMap: Record<string, string> }> {
   try {
-    const res = await groupViewApiClient.get(`/groups/${groupId}/expenses`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    return handleResponseStructure<Expense[]>(res.data) ?? [];
+    const res = await serverFetch(`/api/groups/${id}/transactions`);
+    if (!res.ok) return { transactions: [], memberMap: {} };
+    const data = await res.json();
+    return {
+      transactions: Array.isArray(data.transactions) ? data.transactions : [],
+      memberMap: data.memberMap ?? {},
+    };
   } catch {
-    return [];
+    return { transactions: [], memberMap: {} };
   }
 }
 
 export default async function GroupDetailPage({ params }: Props) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('access-token')?.value;
-  const currentUser = await getCurrentUser();
+  const { id } = await params;
 
+  const currentUser = await getCurrentUser();
   if (!currentUser) redirect('/login');
 
-  const [group, expenses] = await Promise.all([
-    fetchGroup(params.id, token),
-    fetchExpenses(params.id, token),
+  const [group, { transactions, memberMap }] = await Promise.all([
+    fetchGroup(id),
+    fetchTransactions(id),
   ]);
 
-  if (!group) {
+  if (!group && transactions.length === 0) {
     return (
       <div className={styles.mainInner}>
         <p className={styles.notFound}>// Group not found</p>
@@ -54,16 +65,26 @@ export default async function GroupDetailPage({ params }: Props) {
     );
   }
 
+  const resolvedGroup: Group = group ?? {
+    id,
+    name: `Group ${id.slice(0, 8)}…`,
+    members: [],
+    createdAt: '',
+    updatedAt: '',
+  };
+
   return (
     <div className={styles.mainInner}>
       <GroupHeader
-        group={group}
-        expenses={expenses}
+        group={resolvedGroup}
+        transactions={transactions}
         currentUser={currentUser.username}
+        displayName={currentUser.displayName}
       />
       <TransactionList
-        expenses={expenses}
+        transactions={transactions}
         currentUser={currentUser.username}
+        memberMap={memberMap}
       />
     </div>
   );

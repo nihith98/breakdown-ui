@@ -41,6 +41,33 @@ export interface Expense {
   updatedAt: string;
 }
 
+export interface PaidForEntry {
+  paidForId: string;
+  paidForValue: number;
+  paidForName?: string;
+}
+
+export interface Transaction {
+  transactionId: string;
+  transactionName: string;
+  transactionDescription?: string;
+  transactionType: 'EXPENSE' | 'SETTLEMENT';
+  amount: number;
+  paidById: string;
+  paidByName?: string;
+  paidForList: PaidForEntry[];
+  splitType: string;
+  timestamp: string | null;
+  groupId: string;
+  transactionStatus: string;
+}
+
+export interface SettlementEntry {
+  fromUserId: string;
+  toUserId: string;
+  amount: number;
+}
+
 export interface User {
   id: string;
   username: string;

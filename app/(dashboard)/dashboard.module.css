@@ -50,11 +50,25 @@
   flex: 1;
 }
 
-.breadcrumb > span {
-  color: var(--fg-tertiary);
+.breadcrumbItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
 }
 
-.breadcrumb > span:last-child {
+.breadcrumbLink {
+  color: var(--fg-tertiary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.breadcrumbLink:hover {
+  color: var(--fg-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.breadcrumbCurrent {
   color: var(--fg-secondary);
 }
 

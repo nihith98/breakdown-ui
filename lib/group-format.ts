@@ -1,5 +1,6 @@
 import {
   Expense,
+  Transaction,
   GroupBalanceStatus,
   GroupListItem,
   GroupSortKey,
@@ -26,6 +27,12 @@ export function balanceLabel(net: number): string {
 
 export function balanceValue(net: number): string {
   return net === 0 ? 'Settled up' : formatMoney(net);
+}
+
+export function formatShortDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 export function relativeTime(iso?: string): string {
@@ -90,5 +97,39 @@ export function txnUserAmount(tx: Expense, user: string): number | null {
 export function txnMeta(tx: Expense, user: string): string {
   const payer = tx.paidBy === user ? 'You' : tx.paidBy;
   const n = tx.splitBetween.length;
+  return `${payer} paid $${tx.amount.toFixed(2)} for ${n} member${n !== 1 ? 's' : ''}`;
+}
+
+export function computeTransactionNet(txns: Transaction[], user: string): number {
+  let net = 0;
+  txns.forEach(tx => {
+    const userEntry = tx.paidForList.find(e => e.paidForId === user);
+    const isPayer = tx.paidById === user;
+    if (!userEntry && !isPayer) return;
+    if (isPayer) {
+      const ownShare = userEntry?.paidForValue ?? 0;
+      net += tx.amount - ownShare;
+    } else {
+      net -= userEntry!.paidForValue;
+    }
+  });
+  return Math.round(net * 100) / 100;
+}
+
+export function transactionUserAmount(tx: Transaction, user: string): number | null {
+  const userEntry = tx.paidForList.find(e => e.paidForId === user);
+  const isPayer = tx.paidById === user;
+  if (!userEntry && !isPayer) return null;
+  if (isPayer) {
+    const ownShare = userEntry?.paidForValue ?? 0;
+    return tx.amount - ownShare;
+  }
+  return -(userEntry!.paidForValue);
+}
+
+export function transactionMeta(tx: Transaction, user: string, memberMap?: Record<string, string>): string {
+  const resolvedName = tx.paidByName ?? memberMap?.[tx.paidById] ?? tx.paidById;
+  const payer = tx.paidById === user ? 'You' : resolvedName;
+  const n = tx.paidForList.length;
   return `${payer} paid $${tx.amount.toFixed(2)} for ${n} member${n !== 1 ? 's' : ''}`;
 }

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Expense } from '@/types';
-import { txnUserAmount, txnMeta, relativeTime } from '@/lib/group-format';
+import { Transaction } from '@/types';
+import { transactionUserAmount, transactionMeta, formatShortDate } from '@/lib/group-format';
 import styles from './TransactionList.module.css';
 
 type FilterKey = 'all' | 'you_paid' | 'others_paid';
@@ -10,8 +10,9 @@ type SortKey = 'recent' | 'amount' | 'name';
 type SortDir = 'desc' | 'asc';
 
 interface Props {
-  expenses: Expense[];
+  transactions: Transaction[];
   currentUser: string;
+  memberMap?: Record<string, string>;
 }
 
 const FILTERS: { id: FilterKey; label: string; dot?: string }[] = [
@@ -20,7 +21,7 @@ const FILTERS: { id: FilterKey; label: string; dot?: string }[] = [
   { id: 'others_paid', label: 'Others paid', dot: 'dotOthersPaid' },
 ];
 
-export function TransactionList({ expenses, currentUser }: Props) {
+export function TransactionList({ transactions, currentUser, memberMap }: Props) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
   const [sort, setSort] = useState<SortKey>('recent');
@@ -28,35 +29,37 @@ export function TransactionList({ expenses, currentUser }: Props) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const visible = useMemo(() => {
-    let list = [...expenses];
+    let list = [...transactions];
     if (query) {
       const q = query.toLowerCase();
-      list = list.filter(t => t.description.toLowerCase().includes(q));
+      list = list.filter(t => t.transactionName.toLowerCase().includes(q));
     }
     if (filter === 'you_paid') {
-      list = list.filter(t => t.paidBy === currentUser);
+      list = list.filter(t => t.paidById === currentUser);
     }
     if (filter === 'others_paid') {
       list = list.filter(
-        t => t.paidBy !== currentUser && t.splitBetween.includes(currentUser),
+        t => t.paidById !== currentUser && t.paidForList.some(e => e.paidForId === currentUser),
       );
     }
     list.sort((a, b) => {
       if (sort === 'amount') return b.amount - a.amount;
-      if (sort === 'name') return a.description.localeCompare(b.description);
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sort === 'name') return a.transactionName.localeCompare(b.transactionName);
+      const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+      const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      return bTime - aTime;
     });
     if (dir === 'asc') list.reverse();
     return list;
-  }, [expenses, query, filter, sort, dir]);
+  }, [transactions, query, filter, sort, dir, currentUser]);
 
   const counts = useMemo((): Record<FilterKey, number> => ({
-    all: expenses.length,
-    you_paid: expenses.filter(t => t.paidBy === currentUser).length,
-    others_paid: expenses.filter(
-      t => t.paidBy !== currentUser && t.splitBetween.includes(currentUser),
+    all: transactions.length,
+    you_paid: transactions.filter(t => t.paidById === currentUser).length,
+    others_paid: transactions.filter(
+      t => t.paidById !== currentUser && t.paidForList.some(e => e.paidForId === currentUser),
     ).length,
-  }), [expenses, currentUser]);
+  }), [transactions, currentUser]);
 
   return (
     <div className={styles.txnSection}>
@@ -150,18 +153,15 @@ export function TransactionList({ expenses, currentUser }: Props) {
 
       {/* ===== JSON-styled transaction list ===== */}
       <div className={styles.txnListContainer} role="list" aria-label="Transaction list">
-        <div className={styles.jsonBracket} aria-hidden="true">[</div>
-
         {visible.length === 0 ? (
           <div className={styles.emptyState} role="listitem">
             <span className={styles.emptyComment}>// no transactions match</span>
           </div>
         ) : (
           visible.map((tx, idx) => {
-            const amount = txnUserAmount(tx, currentUser);
-            const meta = txnMeta(tx, currentUser);
-            const isActive = activeId === tx.id;
-            const isLast = idx === visible.length - 1;
+            const amount = transactionUserAmount(tx, currentUser);
+            const meta = transactionMeta(tx, currentUser, memberMap);
+            const isActive = activeId === tx.transactionId;
             const notInvolved = amount === null;
             const amountSign: 'positive' | 'negative' | 'neutral' =
               amount === null ? 'neutral'
@@ -171,40 +171,37 @@ export function TransactionList({ expenses, currentUser }: Props) {
 
             return (
               <div
-                key={tx.id}
+                key={tx.transactionId}
                 className={`${styles.txnRow}${isActive ? ` ${styles.txnRowActive}` : ''}`}
-                onClick={() => setActiveId(isActive ? null : tx.id)}
+                onClick={() => setActiveId(isActive ? null : tx.transactionId)}
                 role="listitem"
               >
-                <div className={styles.txnRowInner}>
-                  <span className={styles.txnBrace} aria-hidden="true">{'{'}</span>
-                  <div className={styles.txnBody}>
-                    <span className={styles.txnName}>&ldquo;{tx.description}&rdquo;</span>
-                    <span className={styles.txnMeta}>{meta}</span>
-                  </div>
-                  <div className={styles.txnRight}>
-                    {notInvolved ? (
-                      <span className={styles.txnNotInvolved}>not involved</span>
-                    ) : (
-                      <span className={styles.txnAmount} data-sign={amountSign}>
-                        {amount! >= 0 ? '+' : '-'}${Math.abs(amount!).toFixed(2)}
-                      </span>
-                    )}
-                    <span className={styles.txnChevron} aria-hidden="true">›</span>
-                  </div>
+                <span className={styles.txnBrace} aria-hidden="true">{'{'}</span>
+                <div className={styles.txnBody}>
+                  <span className={styles.txnName}>&ldquo;{tx.transactionName}&rdquo;</span>
+                  <span className={styles.txnSep} aria-hidden="true">{' · '}</span>
+                  <span className={styles.txnMeta}>{meta}</span>
                 </div>
-                <div className={styles.txnCloser} aria-hidden="true">
-                  {isLast ? '}' : '},'}
+                <div className={styles.txnRight}>
+                  {tx.timestamp && (
+                    <time className={styles.txnDate} dateTime={tx.timestamp}>
+                      {formatShortDate(tx.timestamp)}
+                    </time>
+                  )}
+                  {notInvolved ? (
+                    <span className={styles.txnNotInvolved}>not involved</span>
+                  ) : (
+                    <span className={styles.txnAmount} data-sign={amountSign}>
+                      {amount! >= 0 ? '+' : '-'}${Math.abs(amount!).toFixed(2)}
+                    </span>
+                  )}
                 </div>
-                <time className={styles.txnTime} dateTime={tx.createdAt}>
-                  {relativeTime(tx.createdAt)}
-                </time>
+                <span className={styles.txnCloser} aria-hidden="true">{'}'}</span>
               </div>
             );
           })
         )}
 
-        <div className={styles.jsonBracket} aria-hidden="true">]</div>
       </div>
     </div>
   );

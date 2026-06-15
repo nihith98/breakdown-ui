@@ -1,20 +1,3 @@
-function decodeTokenPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-
-    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padding = base64.length % 4;
-    if (padding) {
-      base64 += '='.repeat(4 - padding);
-    }
-
-    return JSON.parse(Buffer.from(base64, 'base64').toString());
-  } catch {
-    return null;
-  }
-}
-
 export async function loginUser(username: string, password: string): Promise<void> {
   const response = await fetch('/api/auth/login', {
     method: 'POST',
@@ -27,22 +10,12 @@ export async function loginUser(username: string, password: string): Promise<voi
     throw new Error(data.error ?? 'Login failed');
   }
 
-  // Extract token expiry from access token cookie and store in localStorage
-  // This is used by the axios interceptor to refresh tokens automatically
-  try {
-    const cookies = response.headers.get('set-cookie');
-    if (cookies) {
-      // Try to get the access token from response headers or assume it's in the cookie
-      // The expiry can be calculated from the token payload
-      // We'll get the token from the next fetch to the dashboard which will have the cookie set
-      // For now, set a default 15-minute expiry
-      const expiryTime = Math.floor(Date.now() / 1000) + 900; // 15 minutes from now
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('token_expiry', expiryTime.toString());
-      }
-    }
-  } catch (error) {
-    console.error('Failed to store token expiry:', error);
+  // Store token expiry hint in localStorage for the client-side refresh interceptor.
+  // Browser JS cannot read Set-Cookie headers, so we derive expiry from current time.
+  // The access token lifetime is 15 minutes (900s), matching the server cookie maxAge.
+  const expiryTime = Math.floor(Date.now() / 1000) + 900;
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('token_expiry', expiryTime.toString());
   }
 }
 

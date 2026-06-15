@@ -5,7 +5,7 @@ import { Transaction } from '@/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const result = await validateAndEnrichRequest(request);
@@ -34,16 +34,26 @@ export async function GET(
       transactionType: t.transactionType,
       amount: t.amount,
       paidById: t.paidById,
-      paidForList: t.paidForList ?? [],
+      paidByName: t.paidByName ?? undefined,
+      paidForList: (t.paidForList ?? []).map((pf: any) => ({
+        paidForId: pf.paidForId,
+        paidForValue: pf.paidForValue,
+        paidForName: pf.paidForName ?? undefined,
+      })),
       splitType: t.splitType,
       timestamp: t.timestamp ?? null,
       groupId: t.groupId,
       transactionStatus: t.transactionStatus,
     }));
 
-    return NextResponse.json(transactions);
+    const memberMap: Record<string, string> = body.payload.memberMap ?? {};
+
+    return NextResponse.json({ transactions, memberMap });
   } catch (error: any) {
-    console.error('[Expenses] Error:', error.message);
+    console.error('[Transactions] Error:', error.message);
+    if (error.response?.data) {
+      console.error('[Transactions] Backend response:', JSON.stringify(error.response.data));
+    }
     return NextResponse.json(
       { error: error.message || 'Failed to fetch transactions' },
       { status: error.response?.status || 500 }

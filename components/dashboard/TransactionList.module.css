@@ -188,7 +188,11 @@
 
 /* ===== Transaction row ===== */
 .txnRow {
-  padding: var(--space-sm) var(--space-lg);
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px var(--space-lg);
   border-bottom: 1px solid var(--border-divider);
   cursor: pointer;
   transition: background-color var(--transition-fast);
@@ -201,12 +205,6 @@
   padding-left: calc(var(--space-lg) - 2px);
 }
 
-.txnRowInner {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-sm);
-}
-
 .txnBrace {
   color: var(--syntax-keyword);
   flex-shrink: 0;
@@ -217,36 +215,55 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-wrap: wrap;
   align-items: baseline;
-  gap: 0 var(--space-sm);
+  overflow: hidden;
 }
 
 .txnName {
   color: var(--syntax-string);
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 45%;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 220px;
+}
+
+.txnSep {
+  color: var(--syntax-comment);
+  white-space: pre;
+  flex-shrink: 0;
 }
 
 .txnMeta {
   color: var(--syntax-comment);
-  font-size: 10px;
+  font-size: 12px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
 }
 
 .txnRight {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   flex-shrink: 0;
+}
+
+.txnDate {
+  font-size: 11px;
+  color: var(--fg-tertiary);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .txnAmount {
   font-variant-numeric: tabular-nums;
   font-weight: var(--weight-semibold);
-  min-width: 68px;
+  min-width: 72px;
   text-align: right;
   color: var(--fg-secondary);
 }
@@ -258,31 +275,14 @@
   font-size: 10px;
   color: var(--fg-tertiary);
   font-style: italic;
-  min-width: 68px;
+  min-width: 72px;
   text-align: right;
 }
-
-.txnChevron {
-  color: var(--fg-tertiary);
-  font-size: 14px;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-.txnRow:hover .txnChevron { opacity: 1; }
 
 .txnCloser {
   color: var(--syntax-keyword);
   font-weight: var(--weight-semibold);
-  margin-top: 1px;
-  padding-left: var(--space-lg);
-}
-
-.txnTime {
-  display: block;
-  color: var(--fg-tertiary);
-  font-size: 10px;
-  margin-top: 1px;
-  padding-left: var(--space-lg);
+  flex-shrink: 0;
 }
 
 /* ===== Empty state ===== */

@@ -1,52 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { groupViewApiClient, groupAdminApiClient } from '@/lib/api-client';
-import { handleResponseStructure } from '@/lib/response-handler';
+import axios from 'axios';
+import { validateAndEnrichRequest, buildUnauthorizedResponse } from '@/lib/auth-middleware';
 import { Group } from '@/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = request.cookies.get('access-token')?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const result = await validateAndEnrichRequest(request);
+    if (!result) {
+      return buildUnauthorizedResponse();
     }
 
-    const axiosResponse = await groupViewApiClient.get(`/groups/${params.id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const { id } = await params;
+    const { enrichedHeaders, user } = result;
 
-    const data = handleResponseStructure<Group>(axiosResponse.data);
-    return NextResponse.json(data);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch group';
-    return NextResponse.json({ error: message }, { status: 500 });
+    const apiHost = process.env.API_HOST || 'http://localhost:8080';
+    const axiosResponse = await axios.get(
+      `${apiHost}/breakdown-dashboard-svc/group/list`,
+      { headers: enrichedHeaders }
+    );
+
+    const body = axiosResponse.data;
+    if (body?.status !== 'SUCCESS' || !body?.payload?.groups) {
+      return NextResponse.json({ error: 'Failed to fetch group' }, { status: 500 });
+    }
+
+    const match = body.payload.groups.find((g: any) => g.groupId === id);
+    if (!match) {
+      return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+    }
+
+    const group: Group = {
+      id: match.groupId,
+      name: match.groupName,
+      members: [],
+      createdAt: '',
+      updatedAt: '',
+    };
+
+    return NextResponse.json(group);
+  } catch (error: any) {
+    console.error('[Group] Error fetching group:', error.message);
+    return NextResponse.json(
+      { error: error.message || 'Failed to fetch group' },
+      { status: error.response?.status || 500 }
+    );
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = request.cookies.get('access-token')?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const result = await validateAndEnrichRequest(request);
+    if (!result) {
+      return buildUnauthorizedResponse();
     }
 
+    const { id } = await params;
+    const { enrichedHeaders } = result;
     const body = await request.json();
 
-    const axiosResponse = await groupAdminApiClient.put(`/groups/${params.id}`, body, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const apiHost = process.env.API_HOST || 'http://localhost:8080';
+    const axiosResponse = await axios.put(
+      `${apiHost}/breakdown-dashboard-svc/admin/group/${id}`,
+      body,
+      { headers: enrichedHeaders }
+    );
 
-    const data = handleResponseStructure<Group>(axiosResponse.data);
-    return NextResponse.json(data);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to update group';
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json(axiosResponse.data);
+  } catch (error: any) {
+    console.error('[Group] Error updating group:', error.message);
+    return NextResponse.json(
+      { error: error.message || 'Failed to update group' },
+      { status: error.response?.status || 400 }
+    );
   }
 }

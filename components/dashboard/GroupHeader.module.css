@@ -31,8 +31,9 @@
 .groupName {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: var(--type-body);
-  font-weight: var(--weight-bold);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--fg-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -162,11 +163,14 @@
 .btnPrimary,
 .btnHighlight,
 .btnGhost {
-  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
   font-family: var(--font-sans);
-  font-size: var(--type-code-sm);
-  font-weight: var(--weight-semibold);
-  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;

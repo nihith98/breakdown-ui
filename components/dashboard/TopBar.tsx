@@ -1,6 +1,67 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import styles from '@/app/(dashboard)/dashboard.module.css';
 
+interface BreadcrumbSegment {
+  label: string;
+  href: string;
+}
+
+function useGroupName(groupId: string | null): string | null {
+  const [name, setName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!groupId) return;
+    fetch(`/api/groups/${groupId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.name) setName(data.name);
+      })
+      .catch(() => null);
+  }, [groupId]);
+
+  return name;
+}
+
+function buildSegments(pathname: string, groupName: string | null): BreadcrumbSegment[] {
+  const segments: BreadcrumbSegment[] = [{ label: 'breakdown-ui', href: '/' }];
+
+  if (pathname === '/') return segments;
+
+  const parts = pathname.split('/').filter(Boolean);
+
+  const labelMap: Record<string, string> = {
+    groups: 'Groups',
+    families: 'Families',
+    account: 'Account',
+    transactions: 'Transactions',
+    orchestration: 'Orchestration',
+  };
+
+  if (parts[0] && labelMap[parts[0]]) {
+    segments.push({ label: labelMap[parts[0]], href: `/${parts[0]}` });
+  }
+
+  if (parts[0] === 'groups' && parts[1]) {
+    const label = groupName ?? parts[1];
+    segments.push({ label, href: `/groups/${parts[1]}` });
+  }
+
+  return segments;
+}
+
 export function TopBar() {
+  const pathname = usePathname();
+
+  const groupIdMatch = pathname.match(/^\/groups\/([^/]+)/);
+  const groupId = groupIdMatch ? groupIdMatch[1] : null;
+  const groupName = useGroupName(groupId);
+
+  const segments = buildSegments(pathname, groupName);
+
   return (
     <div className={styles.topBar}>
       <div className={styles.topBarLeft}>
@@ -10,13 +71,21 @@ export function TopBar() {
       </div>
 
       <div className={styles.breadcrumb}>
-        <span>breakdown-ui</span>
-        <span className={styles.breadcrumbSep}>›</span>
-        <span>app</span>
-        <span className={styles.breadcrumbSep}>›</span>
-        <span>(dashboard)</span>
-        <span className={styles.breadcrumbSep}>›</span>
-        <span>page.tsx</span>
+        {segments.map((seg, i) => {
+          const isLast = i === segments.length - 1;
+          return (
+            <span key={seg.href} className={styles.breadcrumbItem}>
+              {i > 0 && <span className={styles.breadcrumbSep}>›</span>}
+              {isLast ? (
+                <span className={styles.breadcrumbCurrent}>{seg.label}</span>
+              ) : (
+                <Link href={seg.href} className={styles.breadcrumbLink}>
+                  {seg.label}
+                </Link>
+              )}
+            </span>
+          );
+        })}
       </div>
 
       <div className={styles.topBarRight}>

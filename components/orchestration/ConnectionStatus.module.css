@@ -1,0 +1,62 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.text {
+  flex: 1;
+}
+
+/* Status variants */
+.connecting {
+  background-color: rgba(252, 213, 53, 0.1);
+  border-bottom: 1px solid rgba(252, 213, 53, 0.3);
+  color: #fcd535;
+}
+
+.connecting .dot {
+  background-color: #fcd535;
+}
+
+.disconnected {
+  background-color: var(--signal-error-tint);
+  border-bottom: 1px solid var(--signal-error);
+  color: var(--signal-error);
+}
+
+.disconnected .dot {
+  background-color: var(--signal-error);
+  animation: pulse-error 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes pulse-error {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}

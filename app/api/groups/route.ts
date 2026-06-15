@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAndEnrichRequest, buildUnauthorizedResponse } from '@/lib/auth-middleware';
-import { groupViewApiClient } from '@/lib/api-client';
 import axios from 'axios';
-import { handleResponseStructure, handleAuthResponseStructure } from '@/lib/response-handler';
+import { handleAuthResponseStructure } from '@/lib/response-handler';
 
 export async function GET(request: NextRequest) {
   try {

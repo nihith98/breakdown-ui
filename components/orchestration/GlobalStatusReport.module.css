@@ -1,0 +1,100 @@
+.reportContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.messageList {
+  display: flex;
+  flex-direction: column-reverse;
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.messageList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messageList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messageList::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+  border-radius: 3px;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--fg-tertiary);
+  font-size: var(--type-small);
+  text-align: center;
+  padding: var(--space-lg);
+}
+
+.messageRow {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border-divider);
+  transition: background-color var(--transition-fast);
+}
+
+.messageRow:hover {
+  background-color: var(--surface-card-hover);
+}
+
+.messageRow.critical {
+  background-color: var(--signal-error-tint);
+  border-left: 3px solid var(--signal-error);
+}
+
+.messageRow.high {
+  background-color: rgba(252, 213, 53, 0.08);
+  border-left: 3px solid #fcd535;
+}
+
+.messageRow.medium {
+  background-color: rgba(156, 220, 254, 0.08);
+  border-left: 3px solid var(--syntax-variable);
+}
+
+.messageRow.low {
+  background-color: transparent;
+  border-left: 3px solid var(--border-divider);
+}
+
+.messageHeader {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xs);
+  font-size: var(--type-code-sm);
+}
+
+.timestamp {
+  color: var(--fg-tertiary);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+.messageType {
+  color: var(--fg-secondary);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.messageContent {
+  color: var(--fg-primary);
+  font-size: var(--type-small);
+  line-height: var(--leading-normal);
+  margin: 0;
+  word-break: break-word;
+}

@@ -55,6 +55,16 @@ The right approach depends on what you're doing:
 - **No translateY lifts on hover** — editor panels don't levitate. Hover changes background and/or border alpha only.
 - **Animation.** `var(--transition-fast)` (0.12s) for hover/focus; `var(--transition-med)` (0.2s) for cards/modals. No bouncy easings, no spring physics.
 
+## Theme consistency — always update both dark and light
+
+Whenever you apply changes to the design system, colors, components, or tokens **you must update both dark and light theme variants**. This means:
+- If you modify `colors_and_type.css`, test and verify changes in both `[data-theme="dark"]` and `[data-theme="light"]`
+- If you update component CSS (`.bd-card`, `.bd-btn`, etc), ensure the styling is complete for both themes
+- If you add new color tokens or variables, define them for both dark and light modes
+- When building components or screens, always render and check them in both theme states before considering the work complete
+
+The `colors_and_type.css` file contains both theme definitions — dark as the default, light as the alternative. Every style rule that uses a theme-specific color must work correctly in both contexts. Do not ship changes that only look good in one theme.
+
 ## Theme
 
 Dark is the default. Set on `<html data-theme="dark">` (or `light`). The kit's `index.html` has an inline pre-React script that reads `localStorage["bd-theme"]` and applies the attribute before mount — copy that pattern to prevent flash-of-wrong-theme.
