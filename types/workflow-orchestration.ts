@@ -6,9 +6,9 @@
  */
 
 export type WorkflowStatus = 'pending' | 'running' | 'completed' | 'failed' | 'paused';
-export type PhaseStatusType = 'pending' | 'running' | 'completed' | 'failed';
-export type AgentStatusType = 'pending' | 'running' | 'completed' | 'failed';
-export type TaskStatusType = 'pending' | 'running' | 'completed' | 'failed';
+export type PhaseStatusType = 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+export type AgentStatusType = 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+export type TaskStatusType = 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
 export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 export type MessageType = 'phase_transition' | 'agent_status' | 'task_update' | 'error' | 'warning' | 'info';
 export type MessageSeverity = 'low' | 'medium' | 'high' | 'critical';
@@ -27,7 +27,7 @@ export interface WorkflowStatusResponse {
 export interface PhaseStatus {
   phaseId: string;
   phaseName: string;
-  position: 1 | 2 | 3 | 4 | 5;
+  position: number;
   status: PhaseStatusType;
   progress: number; // 0-100
   agents: AgentStatus[];

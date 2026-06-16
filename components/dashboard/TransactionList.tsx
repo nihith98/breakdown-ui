@@ -13,6 +13,7 @@ interface Props {
   transactions: Transaction[];
   currentUser: string;
   memberMap?: Record<string, string>;
+  onTxnClick?: (tx: Transaction) => void;
 }
 
 const FILTERS: { id: FilterKey; label: string; dot?: string }[] = [
@@ -21,7 +22,7 @@ const FILTERS: { id: FilterKey; label: string; dot?: string }[] = [
   { id: 'others_paid', label: 'Others paid', dot: 'dotOthersPaid' },
 ];
 
-export function TransactionList({ transactions, currentUser, memberMap }: Props) {
+export function TransactionList({ transactions, currentUser, memberMap, onTxnClick }: Props) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
   const [sort, setSort] = useState<SortKey>('recent');
@@ -173,7 +174,10 @@ export function TransactionList({ transactions, currentUser, memberMap }: Props)
               <div
                 key={tx.transactionId}
                 className={`${styles.txnRow}${isActive ? ` ${styles.txnRowActive}` : ''}`}
-                onClick={() => setActiveId(isActive ? null : tx.transactionId)}
+                onClick={() => {
+                  setActiveId(isActive ? null : tx.transactionId);
+                  onTxnClick?.(tx);
+                }}
                 role="listitem"
               >
                 <span className={styles.txnBrace} aria-hidden="true">{'{'}</span>

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import axios from 'axios';
-
-const API_HOST = process.env.API_HOST || 'http://localhost:8080';
+import { authApiClient } from '@/lib/api-client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,8 +16,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Call Java backend to refresh token
-    const response = await axios.post(
-      `${API_HOST}/auth/refresh`,
+    const response = await authApiClient.post(
+      '/auth/refresh',
       { refreshToken },
       {
         headers: {

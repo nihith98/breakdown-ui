@@ -1,9 +1,8 @@
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { Group, Transaction } from '@/types';
-import { GroupHeader } from '@/components/dashboard/GroupHeader';
-import { TransactionList } from '@/components/dashboard/TransactionList';
+import { Group, GroupInfo, Transaction } from '@/types';
+import { GroupDetailClient } from '@/components/dashboard/GroupDetailClient';
 import styles from './group-detail.module.css';
 
 interface Props {
@@ -46,15 +45,26 @@ async function fetchTransactions(id: string): Promise<{ transactions: Transactio
   }
 }
 
+async function fetchGroupInfo(id: string): Promise<GroupInfo | null> {
+  try {
+    const res = await serverFetch(`/api/groups/${id}/group-info`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 export default async function GroupDetailPage({ params }: Props) {
   const { id } = await params;
 
   const currentUser = await getCurrentUser();
   if (!currentUser) redirect('/login');
 
-  const [group, { transactions, memberMap }] = await Promise.all([
+  const [group, { transactions, memberMap }, groupInfo] = await Promise.all([
     fetchGroup(id),
     fetchTransactions(id),
+    fetchGroupInfo(id),
   ]);
 
   if (!group && transactions.length === 0) {
@@ -75,16 +85,13 @@ export default async function GroupDetailPage({ params }: Props) {
 
   return (
     <div className={styles.mainInner}>
-      <GroupHeader
+      <GroupDetailClient
         group={resolvedGroup}
         transactions={transactions}
+        memberMap={memberMap}
+        groupInfo={groupInfo}
         currentUser={currentUser.username}
         displayName={currentUser.displayName}
-      />
-      <TransactionList
-        transactions={transactions}
-        currentUser={currentUser.username}
-        memberMap={memberMap}
       />
     </div>
   );

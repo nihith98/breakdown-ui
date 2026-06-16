@@ -10,9 +10,10 @@ interface Props {
   transactions: Transaction[];
   currentUser: string;
   displayName?: string;
+  onAddTransaction?: () => void;
 }
 
-export function GroupHeader({ group, transactions, currentUser, displayName }: Props) {
+export function GroupHeader({ group, transactions, currentUser, displayName, onAddTransaction }: Props) {
   const router = useRouter();
 
   const net = computeTransactionNet(transactions, currentUser);
@@ -70,10 +71,10 @@ export function GroupHeader({ group, transactions, currentUser, displayName }: P
       </div>
 
       <div className={styles.actions}>
-        <button className={styles.btnPrimary}>+ Add transaction</button>
-        <button className={styles.btnHighlight}>Settle up</button>
-        <button className={styles.btnGhost} title="View balances">Balances</button>
-        <button className={styles.btnGhost} title="View members">Members</button>
+        <button className={styles.btnPrimary} onClick={onAddTransaction}>+ Add transaction</button>
+        <button className={styles.btnHighlight} onClick={() => router.push(`/groups/${group.id}/balances`)}>Settle up</button>
+        <button className={styles.btnGhost} title="View balances" onClick={() => router.push(`/groups/${group.id}/balances`)}>Balances</button>
+        <button className={styles.btnGhost} title="View members" onClick={() => router.push(`/groups/${group.id}/members`)}>Members</button>
       </div>
     </div>
   );

@@ -127,6 +127,18 @@ export function transactionUserAmount(tx: Transaction, user: string): number | n
   return -(userEntry!.paidForValue);
 }
 
+export function getDollarShare(tx: Transaction, userId: string): number {
+  const entry = tx.paidForList.find(e => e.paidForId === userId);
+  if (!entry) return 0;
+  if (tx.splitType === 'EQUAL' || tx.splitType === 'AMOUNT') return entry.paidForValue;
+  if (tx.splitType === 'SHARES') {
+    const total = tx.paidForList.reduce((s, e) => s + e.paidForValue, 0);
+    return total > 0 ? (entry.paidForValue / total) * tx.amount : 0;
+  }
+  if (tx.splitType === 'PERCENTAGE') return (entry.paidForValue / 100) * tx.amount;
+  return 0;
+}
+
 export function transactionMeta(tx: Transaction, user: string, memberMap?: Record<string, string>): string {
   const resolvedName = tx.paidByName ?? memberMap?.[tx.paidById] ?? tx.paidById;
   const payer = tx.paidById === user ? 'You' : resolvedName;

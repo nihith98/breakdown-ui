@@ -143,3 +143,70 @@ export interface DashboardSummary {
   recentGroups: GroupSummary[];
   recentFamilies: Family[];
 }
+
+export type SplitType = 'EQUAL' | 'SHARES' | 'PERCENTAGE' | 'AMOUNT';
+
+export interface InsertTransactionInput {
+  transactionName: string;
+  transactionDescription?: string;
+  transactionType: 'EXPENSE';
+  amount: number;
+  paidById: string;
+  paidForList: Array<{
+    paidForId: string;
+    paidForValue: number;
+  }>;
+  splitType: SplitType;
+  timestamp: string | null;
+  groupId: string;
+  transactionStatus: 'INCOMPLETE';
+}
+
+export interface SettlementTransaction {
+  uuid: string;
+  transactionType: 'SETTLEMENT';
+  paidById: string;
+  paidByName?: string | null;
+  paidForList: Array<{
+    paidForId: string;
+    paidForValue: number;
+    paidForName?: string | null;
+  }>;
+  transactionStatus: 'INCOMPLETE' | 'COMPLETE';
+  groupId: string;
+  familyId: string | null;
+}
+
+export interface SettlementListResponse {
+  groupId: string;
+  settlementList: SettlementTransaction[];
+  memberMap: Record<string, string>;
+}
+
+export interface MemberTotalSpend {
+  userId: string;
+  displayName: string;
+  totalSpend: number;
+}
+
+export interface GroupInfoPerson {
+  userId: string;
+  displayName: string;
+  familyId?: string | null;
+}
+
+export interface GroupInfoFamily {
+  familyId: string;
+  familyName: string;
+  memberIds: string[];
+}
+
+export interface GroupInfo {
+  groupId: string;
+  joiningCode: string;
+  groupName: string;
+  groupDescription?: string;
+  createdById: string | null;
+  personList: GroupInfoPerson[];
+  familyList: GroupInfoFamily[] | null;
+}
