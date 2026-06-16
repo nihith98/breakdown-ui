@@ -16,6 +16,7 @@ const statusLabels: Record<Status, string> = {
   completed: 'Completed',
   failed: 'Failed',
   paused: 'Paused',
+  skipped: 'Skipped',
 };
 
 /**

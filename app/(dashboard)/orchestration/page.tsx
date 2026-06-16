@@ -13,7 +13,7 @@ interface OrchestrationPageProps {
  * the orchestration ID to the client-side dashboard.
  */
 export default async function OrchestrationPage({ searchParams }: OrchestrationPageProps) {
-  const orchestrationId = searchParams.orchestrationId || 'igv-20250612-a7f3k'; // Fallback for demo
+  const orchestrationId = searchParams.orchestrationId || 'latest'; // Resolves to the most recent workflow run
 
   return (
     <WorkflowProvider>

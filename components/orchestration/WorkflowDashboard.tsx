@@ -13,124 +13,55 @@ interface WorkflowDashboardProps {
   orchestrationId: string;
 }
 
+const POLL_INTERVAL_MS = 2000;
+
 /**
  * WorkflowDashboard — Main client component for workflow monitoring
  *
- * Manages:
- * - Initial workflow state fetch
- * - WebSocket/polling connection
- * - Real-time updates
- * - Component composition and layout
+ * Workflow-Trigger.psm1 is a one-shot PowerShell script, not a running
+ * server, so there's no socket to push updates from. It writes a JSON
+ * snapshot to .breakdown/workflow-status/<id>.json after every
+ * phase/agent transition instead, and this component polls
+ * GET /api/orchestrator/[id]/status (which reads that file) on an interval.
  */
 export function WorkflowDashboard({ orchestrationId }: WorkflowDashboardProps) {
-  const {
-    workflow,
-    setWorkflowStatus,
-    setConnectionStatus,
-    connectionStatus,
-    addLog,
-    updateAgentStatus,
-    updateTaskStatus,
-    addMessage,
-  } = useWorkflow();
+  const { workflow, setWorkflowStatus, setConnectionStatus, connectionStatus } = useWorkflow();
 
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Fetch initial workflow state
   useEffect(() => {
-    const fetchInitialState = async () => {
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const poll = async () => {
       try {
-        setConnectionStatus('connecting');
-        const response = await fetch(`/api/orchestrator/${orchestrationId}/status`);
+        const response = await fetch(`/api/orchestrator/${orchestrationId}/status`, { cache: 'no-store' });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
+        if (cancelled) return;
+
         setWorkflowStatus(data);
         setConnectionStatus('connected');
         setIsInitialized(true);
       } catch (error) {
-        console.error('Failed to fetch initial workflow state:', error);
-        setConnectionStatus('disconnected');
-        // Retry after 3 seconds
-        setTimeout(fetchInitialState, 3000);
+        console.error('Failed to fetch workflow status:', error);
+        if (!cancelled) setConnectionStatus('disconnected');
+      } finally {
+        if (!cancelled) {
+          pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
+        }
       }
     };
 
-    fetchInitialState();
-  }, [orchestrationId, setWorkflowStatus, setConnectionStatus]);
-
-  // WebSocket connection for real-time updates
-  useEffect(() => {
-    if (!isInitialized) return;
-
-    const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const wsUrl = `${protocol}://${typeof window !== 'undefined' ? window.location.host : 'localhost:3000'}/api/orchestrator/ws?orchestrationId=${orchestrationId}`;
-
-    let ws: WebSocket | null = null;
-    let reconnectTimeout: NodeJS.Timeout | null = null;
-
-    const connect = () => {
-      try {
-        ws = new WebSocket(wsUrl);
-        setConnectionStatus('connecting');
-
-        ws.onopen = () => {
-          console.log('WebSocket connected');
-          setConnectionStatus('connected');
-          if (reconnectTimeout) clearTimeout(reconnectTimeout);
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const message = JSON.parse(event.data);
-
-            switch (message.type) {
-              case 'workflow_status':
-                setWorkflowStatus(message.data);
-                break;
-              case 'agent_update':
-                updateAgentStatus(message.data.agentId, message.data);
-                break;
-              case 'task_update':
-                updateTaskStatus(message.data.agentId, message.data.taskId, message.data);
-                break;
-              case 'log_entry':
-                addLog(message.data.agentId, message.data);
-                break;
-              case 'message':
-                addMessage(message.data);
-                break;
-            }
-          } catch (error) {
-            console.error('Failed to parse WebSocket message:', error);
-          }
-        };
-
-        ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
-          setConnectionStatus('disconnected');
-        };
-
-        ws.onclose = () => {
-          console.log('WebSocket disconnected');
-          setConnectionStatus('disconnected');
-          // Reconnect after 3 seconds
-          reconnectTimeout = setTimeout(connect, 3000);
-        };
-      } catch (error) {
-        console.error('Failed to establish WebSocket connection:', error);
-        setConnectionStatus('disconnected');
-        reconnectTimeout = setTimeout(connect, 3000);
-      }
-    };
-
-    connect();
+    setConnectionStatus('connecting');
+    poll();
 
     return () => {
-      if (ws) ws.close();
-      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      cancelled = true;
+      if (pollTimer) clearTimeout(pollTimer);
     };
-  }, [isInitialized, orchestrationId, setConnectionStatus, setWorkflowStatus, updateAgentStatus, updateTaskStatus, addLog, addMessage]);
+  }, [orchestrationId, setWorkflowStatus, setConnectionStatus]);
 
   if (!isInitialized || !workflow) {
     return (
