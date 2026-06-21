@@ -68,3 +68,6 @@ temp/
 *.jpeg
 test-results/
 test-*.js
+.breakdown-server.log
+.next-server.log
+nul
