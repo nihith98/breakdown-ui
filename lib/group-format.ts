@@ -1,15 +1,33 @@
 import {
   Expense,
+  GroupInfo,
   Transaction,
   GroupBalanceStatus,
   GroupListItem,
   GroupSortKey,
   SortDirection,
+  UserFamilyInfo,
 } from '@/types/index';
+import { getCurrencySymbol } from '@/lib/currency';
+
+export function buildUserFamilyMap(groupInfo: GroupInfo | null): Record<string, UserFamilyInfo> {
+  const map: Record<string, UserFamilyInfo> = {};
+  if (!groupInfo?.familyList) return map;
+  for (const family of groupInfo.familyList) {
+    for (const memberId of family.memberIds) {
+      map[memberId] = {
+        familyId: family.familyId,
+        familyName: family.familyName,
+        familyHex: family.familyHex,
+        memberCount: family.memberIds.length,
+      };
+    }
+  }
+  return map;
+}
 
 export function formatMoney(n: number): string {
-  const sign = n < 0 ? '-' : '+';
-  return `${sign}$${Math.abs(n).toFixed(2)}`;
+  return `${getCurrencySymbol()}${Math.abs(n).toFixed(2)}`;
 }
 
 export function balanceStatus(net: number): GroupBalanceStatus {
@@ -97,7 +115,7 @@ export function txnUserAmount(tx: Expense, user: string): number | null {
 export function txnMeta(tx: Expense, user: string): string {
   const payer = tx.paidBy === user ? 'You' : tx.paidBy;
   const n = tx.splitBetween.length;
-  return `${payer} paid $${tx.amount.toFixed(2)} for ${n} member${n !== 1 ? 's' : ''}`;
+  return `${payer} paid ${getCurrencySymbol()}${tx.amount.toFixed(2)} for ${n} member${n !== 1 ? 's' : ''}`;
 }
 
 export function computeTransactionNet(txns: Transaction[], user: string): number {
@@ -143,5 +161,5 @@ export function transactionMeta(tx: Transaction, user: string, memberMap?: Recor
   const resolvedName = tx.paidByName ?? memberMap?.[tx.paidById] ?? tx.paidById;
   const payer = tx.paidById === user ? 'You' : resolvedName;
   const n = tx.paidForList.length;
-  return `${payer} paid $${tx.amount.toFixed(2)} for ${n} member${n !== 1 ? 's' : ''}`;
+  return `${payer} paid ${getCurrencySymbol()}${tx.amount.toFixed(2)} for ${n} member${n !== 1 ? 's' : ''}`;
 }

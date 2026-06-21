@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Transaction } from '@/types';
+import { Transaction, UserFamilyInfo } from '@/types';
 import { transactionUserAmount, transactionMeta, formatShortDate } from '@/lib/group-format';
+import { getCurrencySymbol } from '@/lib/currency';
+import { FamilyTag } from './FamilyTag';
 import styles from './TransactionList.module.css';
 
 type FilterKey = 'all' | 'you_paid' | 'others_paid';
@@ -13,6 +15,7 @@ interface Props {
   transactions: Transaction[];
   currentUser: string;
   memberMap?: Record<string, string>;
+  userFamilyMap?: Record<string, UserFamilyInfo>;
   onTxnClick?: (tx: Transaction) => void;
 }
 
@@ -22,7 +25,7 @@ const FILTERS: { id: FilterKey; label: string; dot?: string }[] = [
   { id: 'others_paid', label: 'Others paid', dot: 'dotOthersPaid' },
 ];
 
-export function TransactionList({ transactions, currentUser, memberMap, onTxnClick }: Props) {
+export function TransactionList({ transactions, currentUser, memberMap, userFamilyMap, onTxnClick }: Props) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
   const [sort, setSort] = useState<SortKey>('recent');
@@ -159,9 +162,55 @@ export function TransactionList({ transactions, currentUser, memberMap, onTxnCli
             <span className={styles.emptyComment}>// no transactions match</span>
           </div>
         ) : (
-          visible.map((tx, idx) => {
+          visible.map((tx) => {
+            const isSettlement = tx.transactionType === 'SETTLEMENT';
+
+            if (isSettlement) {
+              const payerName = memberMap?.[tx.paidById] ?? tx.paidByName ?? tx.paidById;
+              const payeeEntry = tx.paidForList[0];
+              const payeeName = payeeEntry
+                ? (memberMap?.[payeeEntry.paidForId] ?? payeeEntry.paidForName ?? payeeEntry.paidForId)
+                : '?';
+              const payerFamily = userFamilyMap?.[tx.paidById];
+              const payeeFamily = payeeEntry ? userFamilyMap?.[payeeEntry.paidForId] : undefined;
+
+              return (
+                <div
+                  key={tx.transactionId}
+                  className={`${styles.txnRowSettlement} ${styles.txnRowClickable}`}
+                  role="listitem"
+                  onClick={() => onTxnClick?.(tx)}
+                >
+                  <span className={styles.txnBraceSettlement} aria-hidden="true">{'{'}</span>
+                  <div className={styles.txnBody}>
+                    <span className={styles.txnNameSettlement}>&ldquo;{tx.transactionName}&rdquo;</span>
+                    <span className={styles.txnSep} aria-hidden="true">{' · '}</span>
+                    <span className={styles.txnMeta} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                      {payerName}
+                      {payerFamily && <FamilyTag familyName={payerFamily.familyName} familyHex={payerFamily.familyHex} />}
+                      {' → '}
+                      {payeeName}
+                      {payeeFamily && <FamilyTag familyName={payeeFamily.familyName} familyHex={payeeFamily.familyHex} />}
+                    </span>
+                  </div>
+                  <div className={styles.txnRight}>
+                    {tx.timestamp && (
+                      <time className={styles.txnDate} dateTime={tx.timestamp}>
+                        {formatShortDate(tx.timestamp)}
+                      </time>
+                    )}
+                    <span className={styles.txnAmount} data-sign="neutral">
+                      {getCurrencySymbol()}{tx.amount.toFixed(2)}
+                    </span>
+                  </div>
+                  <span className={styles.txnBraceSettlement} aria-hidden="true">{'}'}</span>
+                </div>
+              );
+            }
+
             const amount = transactionUserAmount(tx, currentUser);
             const meta = transactionMeta(tx, currentUser, memberMap);
+            const payerFamily = userFamilyMap?.[tx.paidById];
             const isActive = activeId === tx.transactionId;
             const notInvolved = amount === null;
             const amountSign: 'positive' | 'negative' | 'neutral' =
@@ -184,7 +233,15 @@ export function TransactionList({ transactions, currentUser, memberMap, onTxnCli
                 <div className={styles.txnBody}>
                   <span className={styles.txnName}>&ldquo;{tx.transactionName}&rdquo;</span>
                   <span className={styles.txnSep} aria-hidden="true">{' · '}</span>
-                  <span className={styles.txnMeta}>{meta}</span>
+                  {payerFamily ? (
+                    <span className={styles.txnMeta} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                      {tx.paidById === currentUser ? 'You' : (tx.paidByName ?? memberMap?.[tx.paidById] ?? tx.paidById)}
+                      <FamilyTag familyName={payerFamily.familyName} familyHex={payerFamily.familyHex} />
+                      {` paid ${getCurrencySymbol()}${tx.amount.toFixed(2)} for ${tx.paidForList.length} member${tx.paidForList.length !== 1 ? 's' : ''}`}
+                    </span>
+                  ) : (
+                    <span className={styles.txnMeta}>{meta}</span>
+                  )}
                 </div>
                 <div className={styles.txnRight}>
                   {tx.timestamp && (
@@ -196,7 +253,7 @@ export function TransactionList({ transactions, currentUser, memberMap, onTxnCli
                     <span className={styles.txnNotInvolved}>not involved</span>
                   ) : (
                     <span className={styles.txnAmount} data-sign={amountSign}>
-                      {amount! >= 0 ? '+' : '-'}${Math.abs(amount!).toFixed(2)}
+                      {getCurrencySymbol()}{Math.abs(amount!).toFixed(2)}
                     </span>
                   )}
                 </div>

@@ -326,6 +326,10 @@
   background-color: var(--money-positive);
 }
 
+.summaryCard.neutral::before {
+  background-color: var(--money-neutral);
+}
+
 .summaryLabel {
   display: flex;
   align-items: center;
@@ -359,6 +363,10 @@
   color: var(--money-positive);
 }
 
+.summaryAmount.neutral {
+  color: var(--money-neutral);
+}
+
 .summaryNote {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -376,6 +384,75 @@
   font-weight: 600;
   color: var(--fg-primary);
   margin-bottom: 16px;
+}
+
+.primarySecHead {
+  margin: 36px 0 8px;
+}
+
+.primarySecTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-secondary);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.primarySecTitle::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.subHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 22px 0 12px;
+  padding-left: 2px;
+}
+
+.subTitle {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--fg-secondary);
+}
+
+.subTitle::before {
+  content: '// ';
+  color: var(--syntax-comment);
+}
+
+.subLink {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-link);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: color var(--transition-fast);
+}
+
+.subLink:hover {
+  color: var(--accent-highlight);
+}
+
+.emptyState {
+  color: var(--fg-tertiary);
+  font-size: 14px;
+  font-family: var(--font-mono);
+  padding: 24px 0;
 }
 
 /* ===== GROUP CARDS ===== */

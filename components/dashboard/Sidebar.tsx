@@ -27,9 +27,6 @@ export function Sidebar({ displayName }: SidebarProps) {
   const navItems = [
     { href: '/', label: 'Dashboard', icon: <GridIcon /> },
     { href: '/groups', label: 'Groups', icon: <UsersIcon />, badge: '5' },
-    { href: '/families', label: 'Families', icon: <HomeIcon />, badge: '2' },
-    { href: '/account', label: 'Account', icon: <UserIcon /> },
-    { href: '/transactions', label: 'Transactions', icon: <ReceiptIcon />, badge: '38' },
   ];
 
   const handleLogout = async () => {

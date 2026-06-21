@@ -51,6 +51,16 @@
   color: var(--syntax-comment);
 }
 
+.infoLine {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--type-code-sm);
+  color: var(--syntax-comment);
+}
+.infoLine:last-of-type {
+  margin-bottom: var(--space-lg);
+}
+
 .actions {
   display: flex;
   gap: var(--space-sm);

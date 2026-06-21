@@ -1,7 +1,7 @@
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { SettlementListResponse, Transaction } from '@/types';
+import { GroupInfo, SettlementListResponse, Transaction } from '@/types';
 import { BalancesPage } from '@/components/dashboard/BalancesPage';
 
 interface Props {
@@ -44,15 +44,26 @@ async function fetchTransactions(id: string): Promise<{ transactions: Transactio
   }
 }
 
+async function fetchGroupInfo(id: string): Promise<GroupInfo | null> {
+  try {
+    const res = await serverFetch(`/api/groups/${id}/group-info`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 export default async function GroupBalancesPage({ params }: Props) {
   const { id } = await params;
 
   const currentUser = await getCurrentUser();
   if (!currentUser) redirect('/login');
 
-  const [settlements, { transactions, memberMap: txnMemberMap }] = await Promise.all([
+  const [settlements, { transactions, memberMap: txnMemberMap }, groupInfo] = await Promise.all([
     fetchSettlements(id),
     fetchTransactions(id),
+    fetchGroupInfo(id),
   ]);
 
   const memberMap = { ...txnMemberMap, ...settlements.memberMap };
@@ -64,6 +75,7 @@ export default async function GroupBalancesPage({ params }: Props) {
       memberMap={memberMap}
       transactions={transactions}
       currentUserId={currentUser.username}
+      groupInfo={groupInfo}
     />
   );
 }

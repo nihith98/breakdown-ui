@@ -119,7 +119,7 @@ describe('txnMeta_currentUserIsPayer_showsYou', () => {
     // Act
     const meta = txnMeta(tx, 'alice');
     // Assert
-    expect(meta).toBe('You paid $30.00 for 2 members');
+    expect(meta).toBe('You paid ₹30.00 for 2 members');
   });
 });
 
@@ -130,7 +130,7 @@ describe('txnMeta_otherUserIsPayer_showsUsername', () => {
     // Act
     const meta = txnMeta(tx, 'alice');
     // Assert
-    expect(meta).toBe('bob paid $30.00 for 2 members');
+    expect(meta).toBe('bob paid ₹30.00 for 2 members');
   });
 });
 
@@ -141,7 +141,7 @@ describe('txnMeta_singleMember_usessingularLabel', () => {
     // Act
     const meta = txnMeta(tx, 'alice');
     // Assert
-    expect(meta).toBe('You paid $20.00 for 1 member');
+    expect(meta).toBe('You paid ₹20.00 for 1 member');
   });
 });
 
@@ -149,15 +149,21 @@ describe('txnMeta_singleMember_usessingularLabel', () => {
 // Existing utilities (smoke tests)
 // ============================================================
 
-describe('formatMoney_positive_hasPlusSign', () => {
-  it('should prefix positive numbers with +', () => {
-    expect(formatMoney(12.5)).toBe('+$12.50');
+describe('formatMoney_positive_noSign', () => {
+  it('should format positive amount with symbol only', () => {
+    expect(formatMoney(12.5)).toBe('₹12.50');
   });
 });
 
-describe('formatMoney_negative_hasMinusSign', () => {
-  it('should prefix negative numbers with -', () => {
-    expect(formatMoney(-7.3)).toBe('-$7.30');
+describe('formatMoney_negative_noSign', () => {
+  it('should format negative amount as absolute value with symbol', () => {
+    expect(formatMoney(-7.3)).toBe('₹7.30');
+  });
+});
+
+describe('formatMoney_zero_noSign', () => {
+  it('should format zero with symbol only', () => {
+    expect(formatMoney(0)).toBe('₹0.00');
   });
 });
 

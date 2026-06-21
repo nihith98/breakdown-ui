@@ -48,6 +48,14 @@ function buildSegments(pathname: string, groupName: string | null): BreadcrumbSe
   if (parts[0] === 'groups' && parts[1]) {
     const label = groupName ?? parts[1];
     segments.push({ label, href: `/groups/${parts[1]}` });
+
+    const subLabelMap: Record<string, string> = {
+      members: 'Members',
+      balances: 'Settlements',
+    };
+    if (parts[2] && subLabelMap[parts[2]]) {
+      segments.push({ label: subLabelMap[parts[2]], href: `/groups/${parts[1]}/${parts[2]}` });
+    }
   }
 
   return segments;

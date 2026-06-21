@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Group, GroupInfo, Transaction } from '@/types';
+import { buildUserFamilyMap } from '@/lib/group-format';
 import { GroupHeader } from './GroupHeader';
 import { TransactionList } from './TransactionList';
 import { TransactionDetailModal } from './TransactionDetailModal';
+import { SettlementDetailModal } from './SettlementDetailModal';
 import { AddTransactionModal } from './AddTransactionModal';
 
 interface Props {
@@ -18,6 +20,7 @@ interface Props {
 
 export function GroupDetailClient({ group, transactions, memberMap, groupInfo, currentUser, displayName }: Props) {
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
+  const [selectedSettlement, setSelectedSettlement] = useState<Transaction | null>(null);
   const [editTxn, setEditTxn] = useState<Transaction | null>(null);
   const [showAddTxn, setShowAddTxn] = useState(false);
 
@@ -25,6 +28,7 @@ export function GroupDetailClient({ group, transactions, memberMap, groupInfo, c
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSelectedTxn(null);
+        setSelectedSettlement(null);
         setEditTxn(null);
         setShowAddTxn(false);
       }
@@ -34,6 +38,7 @@ export function GroupDetailClient({ group, transactions, memberMap, groupInfo, c
   }, []);
 
   const personList = groupInfo?.personList ?? [];
+  const userFamilyMap = useMemo(() => buildUserFamilyMap(groupInfo), [groupInfo]);
 
   return (
     <>
@@ -42,13 +47,19 @@ export function GroupDetailClient({ group, transactions, memberMap, groupInfo, c
         transactions={transactions}
         currentUser={currentUser}
         displayName={displayName}
+        joiningCode={groupInfo?.joiningCode}
         onAddTransaction={() => setShowAddTxn(true)}
+        userFamilyMap={userFamilyMap}
       />
       <TransactionList
         transactions={transactions}
         currentUser={currentUser}
         memberMap={memberMap}
-        onTxnClick={tx => setSelectedTxn(tx)}
+        userFamilyMap={userFamilyMap}
+        onTxnClick={tx => {
+          if (tx.transactionType === 'SETTLEMENT') setSelectedSettlement(tx);
+          else setSelectedTxn(tx);
+        }}
       />
 
       {selectedTxn && (
@@ -61,12 +72,22 @@ export function GroupDetailClient({ group, transactions, memberMap, groupInfo, c
         />
       )}
 
+      {selectedSettlement && (
+        <SettlementDetailModal
+          transaction={selectedSettlement}
+          memberMap={memberMap}
+          currentUserId={currentUser}
+          onClose={() => setSelectedSettlement(null)}
+        />
+      )}
+
       {(showAddTxn || editTxn) && (
         <AddTransactionModal
           groupId={group.id}
           personList={personList}
           transaction={editTxn}
           currentUserId={currentUser}
+          userFamilyMap={userFamilyMap}
           onClose={() => { setShowAddTxn(false); setEditTxn(null); }}
         />
       )}

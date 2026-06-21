@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Family } from '@/types';
 import styles from '@/app/(dashboard)/dashboard.module.css';
+import { getCurrencySymbol } from '@/lib/currency';
 
 interface FamilyCardProps {
   family: Family;
@@ -18,8 +19,7 @@ export function FamilyCard({ family }: FamilyCardProps) {
 
   const getBalanceValue = () => {
     if (isSettled) return 'Settled up';
-    const sign = isNegative ? '-' : '+';
-    return `${sign}$${Math.abs(family.net).toFixed(2)}`;
+    return `${getCurrencySymbol()}${Math.abs(family.net).toFixed(2)}`;
   };
 
   return (
@@ -46,7 +46,7 @@ export function FamilyCard({ family }: FamilyCardProps) {
         <div className={styles.familyStat}>
           <div className={styles.familyStatKey}>Total spend</div>
           <div className={styles.familyStatValue}>
-            +${family.totalSpend.toFixed(2)}
+            {getCurrencySymbol()}{family.totalSpend.toFixed(2)}
           </div>
         </div>
         <div className={styles.familyStat}>

@@ -2,15 +2,18 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GroupInfoPerson, InsertTransactionInput, SplitType, Transaction } from '@/types';
+import { GroupInfoPerson, InsertTransactionInput, SplitType, Transaction, UserFamilyInfo } from '@/types';
 import { insertTransaction, updateTransaction } from '@/app/(dashboard)/groups/[id]/actions';
+import { FamilyTag } from './FamilyTag';
 import styles from './AddTransactionModal.module.css';
+import { getCurrencySymbol, getCurrencyName } from '@/lib/currency';
 
 interface Props {
   groupId: string;
   personList: GroupInfoPerson[];
   transaction?: Transaction | null;
   currentUserId: string;
+  userFamilyMap?: Record<string, UserFamilyInfo>;
   onClose: () => void;
 }
 
@@ -33,7 +36,7 @@ function defaultSplitValues(splitType: SplitType, amount: number, memberIds: str
   return values;
 }
 
-export function AddTransactionModal({ groupId, personList, transaction, currentUserId, onClose }: Props) {
+export function AddTransactionModal({ groupId, personList, transaction, currentUserId, userFamilyMap, onClose }: Props) {
   const router = useRouter();
   const isEdit = !!transaction;
 
@@ -101,12 +104,14 @@ export function AddTransactionModal({ groupId, personList, transaction, currentU
     }
     if (splitType === 'AMOUNT') {
       const ok = Math.abs(runningTotal - numericAmount) < 0.01;
-      return { text: `$${runningTotal.toFixed(2)} of $${numericAmount.toFixed(2)}`, ok };
+      const sym = getCurrencySymbol();
+      return { text: `${sym}${runningTotal.toFixed(2)} of ${sym}${numericAmount.toFixed(2)}`, ok };
     }
     if (splitType === 'SHARES') {
       return { text: `${runningTotal} total shares`, ok: runningTotal > 0 };
     }
-    return { text: `$${runningTotal.toFixed(2)} of $${numericAmount.toFixed(2)}`, ok: true };
+    const sym = getCurrencySymbol();
+    return { text: `${sym}${runningTotal.toFixed(2)} of ${sym}${numericAmount.toFixed(2)}`, ok: true };
   }, [splitType, runningTotal, numericAmount]);
 
   function validate(): string[] {
@@ -200,7 +205,7 @@ export function AddTransactionModal({ groupId, personList, transaction, currentU
 
               <div className={styles.row2}>
                 <div className={styles.field}>
-                  <label className={styles.fieldLabel} htmlFor="txn-amount">Amount (USD)</label>
+                  <label className={styles.fieldLabel} htmlFor="txn-amount">Amount ({getCurrencyName()})</label>
                   <input
                     id="txn-amount"
                     className={styles.input}
@@ -222,9 +227,11 @@ export function AddTransactionModal({ groupId, personList, transaction, currentU
                 <div className={styles.field}>
                   <label className={styles.fieldLabel} htmlFor="txn-paidby">Paid By</label>
                   <select id="txn-paidby" className={styles.select} value={paidById} onChange={e => setPaidById(e.target.value)}>
-                    {personList.map(p => (
-                      <option key={p.userId} value={p.userId}>{p.userId === currentUserId ? 'You' : p.displayName}</option>
-                    ))}
+                    {personList.map(p => {
+                      const family = userFamilyMap?.[p.userId];
+                      const label = (p.userId === currentUserId ? 'You' : p.displayName) + (family ? ` [${family.familyName}]` : '');
+                      return <option key={p.userId} value={p.userId}>{label}</option>;
+                    })}
                   </select>
                 </div>
               </div>
@@ -242,16 +249,22 @@ export function AddTransactionModal({ groupId, personList, transaction, currentU
                 {paidForEditOpen && (
                   <div className={styles.checkboxList}>
                     <button type="button" className={styles.selectAllBtn} onClick={selectAll}>Select All</button>
-                    {personList.map(p => (
-                      <label key={p.userId} className={styles.checkboxRow}>
-                        <input
-                          type="checkbox"
-                          checked={paidForIds.includes(p.userId)}
-                          onChange={() => toggleMember(p.userId)}
-                        />
-                        {p.displayName}
-                      </label>
-                    ))}
+                    {personList.map(p => {
+                      const family = userFamilyMap?.[p.userId];
+                      return (
+                        <label key={p.userId} className={styles.checkboxRow}>
+                          <input
+                            type="checkbox"
+                            checked={paidForIds.includes(p.userId)}
+                            onChange={() => toggleMember(p.userId)}
+                          />
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            {p.displayName}
+                            {family && <FamilyTag familyName={family.familyName} familyHex={family.familyHex} />}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -287,7 +300,12 @@ export function AddTransactionModal({ groupId, personList, transaction, currentU
                           : value;
                     return (
                       <div className={styles.splitRow} key={id}>
-                        <span className={styles.splitRowName}>{person?.displayName ?? id}</span>
+                        <span className={styles.splitRowName} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          {person?.displayName ?? id}
+                          {userFamilyMap?.[id] && (
+                            <FamilyTag familyName={userFamilyMap[id].familyName} familyHex={userFamilyMap[id].familyHex} />
+                          )}
+                        </span>
                         <input
                           className={styles.splitRowInput}
                           type="number"
@@ -301,7 +319,7 @@ export function AddTransactionModal({ groupId, personList, transaction, currentU
                           }}
                         />
                         {splitType !== 'AMOUNT' && splitType !== 'EQUAL' && (
-                          <span className={styles.splitRowComputed}>${dollar.toFixed(2)}</span>
+                          <span className={styles.splitRowComputed}>{getCurrencySymbol()}{dollar.toFixed(2)}</span>
                         )}
                       </div>
                     );

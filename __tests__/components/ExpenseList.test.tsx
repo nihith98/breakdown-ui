@@ -16,9 +16,9 @@ import { Expense } from '@/types';
 // Mock the utility function
 jest.mock('@/lib/utils', () => ({
   formatCurrency: (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
     }).format(amount);
   },
 }));
@@ -113,7 +113,7 @@ describe('ExpenseList_withExpenses_rendersExpenses', () => {
     render(<ExpenseList expenses={expenses} />);
 
     // Assert
-    expect(screen.getByText(/\$25\.50/)).toBeInTheDocument();
+    expect(screen.getByText(/₹25\.50/)).toBeInTheDocument();
   });
 
   it('should render expense header', () => {
@@ -229,7 +229,7 @@ describe('ExpenseList_dataVariations_handlesEdgeCases', () => {
     render(<ExpenseList expenses={expenses} />);
 
     // Assert
-    expect(screen.getByText(/\$0\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/₹0\.00/)).toBeInTheDocument();
   });
 
   it('should handle expense with very large amount', () => {
@@ -251,7 +251,7 @@ describe('ExpenseList_dataVariations_handlesEdgeCases', () => {
     render(<ExpenseList expenses={expenses} />);
 
     // Assert
-    expect(screen.getByText(/\$9,999\.99/)).toBeInTheDocument();
+    expect(screen.getByText(/₹9,999\.99/)).toBeInTheDocument();
   });
 
   it('should handle paidBy with special characters', () => {

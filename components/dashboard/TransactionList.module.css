@@ -285,6 +285,40 @@
   flex-shrink: 0;
 }
 
+/* ===== Settlement row variant ===== */
+.txnRowSettlement {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px var(--space-lg);
+  border-bottom: 1px solid var(--border-divider);
+  border-left: 2px solid rgba(78, 201, 176, 0.55);
+  background-color: rgba(78, 201, 176, 0.05);
+  padding-left: calc(var(--space-lg) - 2px);
+  cursor: default;
+  transition: background-color var(--transition-fast);
+}
+.txnRowSettlement:last-of-type { border-bottom: none; }
+.txnRowSettlement:hover { background-color: rgba(78, 201, 176, 0.08); }
+
+.txnRowClickable { cursor: pointer; }
+
+.txnBraceSettlement {
+  color: var(--syntax-type);
+  flex-shrink: 0;
+  font-weight: var(--weight-semibold);
+}
+
+.txnNameSettlement {
+  color: var(--syntax-type);
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ===== Empty state ===== */
 .emptyState {
   padding: var(--space-3xl) var(--space-lg);

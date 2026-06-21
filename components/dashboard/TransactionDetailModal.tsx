@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Transaction } from '@/types';
 import { getDollarShare, formatShortDate } from '@/lib/group-format';
+import { getCurrencySymbol } from '@/lib/currency';
+import { deleteTransaction } from '@/app/(dashboard)/groups/[id]/actions';
 import styles from './TransactionDetailModal.module.css';
 
 interface Props {
@@ -24,13 +27,34 @@ function splitUnitLabel(tx: Transaction, value: number): string {
 }
 
 export function TransactionDetailModal({ transaction, memberMap, currentUserId, onClose, onEdit }: Props) {
+  const router = useRouter();
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (confirming) setConfirming(false);
+        else onClose();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, confirming]);
+
+  async function handleDelete() {
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteTransaction(transaction.groupId, transaction.transactionId);
+      router.refresh();
+      onClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete expense');
+      setDeleting(false);
+    }
+  }
 
   const paidByName = resolveName(transaction.paidById, memberMap, transaction.paidByName);
   const isPayer = transaction.paidById === currentUserId;
@@ -58,6 +82,13 @@ export function TransactionDetailModal({ transaction, memberMap, currentUserId, 
           </div>
           <div className={styles.headerActions}>
             <button className={styles.editBtn} onClick={() => onEdit(transaction)}>Edit</button>
+            <button
+              className={styles.deleteHeaderBtn}
+              onClick={() => setConfirming(true)}
+              aria-label="Delete expense"
+            >
+              Delete
+            </button>
             <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
           </div>
         </div>
@@ -66,7 +97,7 @@ export function TransactionDetailModal({ transaction, memberMap, currentUserId, 
           <div className={styles.grid2}>
             <div>
               <div className={styles.fieldLabel}>Amount</div>
-              <div className={styles.amountLarge}>${transaction.amount.toFixed(2)}</div>
+              <div className={styles.amountLarge}>{getCurrencySymbol()}{transaction.amount.toFixed(2)}</div>
             </div>
             <div>
               <div className={styles.fieldLabel}>Paid By</div>
@@ -80,7 +111,7 @@ export function TransactionDetailModal({ transaction, memberMap, currentUserId, 
 
           {involved && (
             <div className={styles.netCallout} data-sign={netSign}>
-              {`// your net on this transaction → ${net >= 0 ? '+' : '-'}$${Math.abs(net).toFixed(2)}`}
+              {`// your net on this transaction → ${getCurrencySymbol()}${Math.abs(net).toFixed(2)}`}
             </div>
           )}
 
@@ -106,17 +137,37 @@ export function TransactionDetailModal({ transaction, memberMap, currentUserId, 
                   {entry.paidForId === currentUserId && <span className={styles.youChip}>you</span>}
                   {unit && <span className={styles.splitUnit}>{unit}</span>}
                   <span className={styles.splitArrow}>→</span>
-                  <span className={styles.splitAmount}>${dollar.toFixed(2)}</span>
+                  <span className={styles.splitAmount}>{getCurrencySymbol()}{dollar.toFixed(2)}</span>
                 </div>
               );
             })}
             <div className={styles.splitBrace}>{'}'}</div>
           </div>
+
+          {error && (
+            <div className={styles.errorBanner}>
+              <span className={styles.errorText}>{error}</span>
+            </div>
+          )}
         </div>
 
-        <div className={styles.footer}>
-          <button className={styles.closeFooterBtn} onClick={onClose}>Close</button>
-        </div>
+        {confirming ? (
+          <div className={styles.confirmFooter}>
+            <span className={styles.confirmText}>// delete this expense?</span>
+            <div className={styles.confirmActions}>
+              <button className={styles.cancelBtn} onClick={() => setConfirming(false)} disabled={deleting}>
+                Cancel
+              </button>
+              <button className={styles.confirmDeleteBtn} onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Deleting…' : 'Confirm Delete'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.footer}>
+            <button className={styles.closeFooterBtn} onClick={onClose}>Close</button>
+          </div>
+        )}
       </div>
     </>
   );

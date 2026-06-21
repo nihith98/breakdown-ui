@@ -3,7 +3,7 @@
 import { cookies, headers } from 'next/headers';
 import { groupAdminApiClient } from '@/lib/api-client';
 import { handleResponseStructure } from '@/lib/response-handler';
-import { InsertTransactionInput } from '@/types';
+import { InsertTransactionInput, InsertSettlementInput, ManageFamiliesInput } from '@/types';
 
 export async function addExpense(
   groupId: string,
@@ -68,9 +68,46 @@ export async function removeMember(groupId: string, userId: string): Promise<voi
   const res = await serverFetch(`/api/groups/${groupId}/members/${userId}`, { method: 'DELETE' });
   const body = await res.json().catch(() => null);
   if (!res.ok) throw new Error(body?.error || 'Failed to remove member');
-  if (body?.responseStatus === 'FAILURE') throw new Error(body.responseMessage || 'Failed to remove member');
+  if (body?.status === 'FAILURE') {
+    const errorMessage = body?.messages?.errorMessages?.[0] || 'Failed to remove member';
+    throw new Error(errorMessage);
+  }
 }
 
 export async function settleUp(groupId: string, settlementUuid: string): Promise<void> {
   throw new Error('settleUp endpoint not yet implemented');
+}
+
+export async function deleteTransaction(
+  groupId: string,
+  transactionId: string
+): Promise<void> {
+  const res = await serverFetch(`/api/groups/${groupId}/transactions/${transactionId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to delete transaction');
+}
+
+export async function createSettlement(
+  groupId: string,
+  input: InsertSettlementInput
+): Promise<void> {
+  const res = await serverFetch(`/api/groups/${groupId}/transactions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error('Failed to create settlement');
+}
+
+export async function manageFamilies(
+  groupId: string,
+  input: ManageFamiliesInput
+): Promise<void> {
+  const res = await serverFetch(`/api/groups/${groupId}/families`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error('Failed to manage families');
 }

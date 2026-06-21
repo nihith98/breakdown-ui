@@ -183,6 +183,22 @@ export interface SettlementListResponse {
   memberMap: Record<string, string>;
 }
 
+export interface InsertSettlementInput {
+  transactionName: 'Settlement';
+  transactionDescription: 'Settlement';
+  transactionType: 'SETTLEMENT';
+  amount: number;
+  paidById: string;
+  paidForList: Array<{
+    paidForId: string;
+    paidForValue: number;
+  }>;
+  splitType: 'AMOUNT';
+  timestamp: null;
+  groupId: string;
+  transactionStatus: 'COMPLETE';
+}
+
 export interface MemberTotalSpend {
   userId: string;
   displayName: string;
@@ -198,7 +214,30 @@ export interface GroupInfoPerson {
 export interface GroupInfoFamily {
   familyId: string;
   familyName: string;
+  familyHex: string;
   memberIds: string[];
+}
+
+export interface UserFamilyInfo {
+  familyId: string;
+  familyName: string;
+  familyHex: string;
+  memberCount: number;
+}
+
+export interface ManageFamilyPersonEntry {
+  personId: string;
+  displayName: string;
+}
+
+export interface ManageFamilyEntry {
+  familyName: string;
+  familyHex: string;
+  personIds: ManageFamilyPersonEntry[];
+}
+
+export interface ManageFamiliesInput {
+  familyList: ManageFamilyEntry[];
 }
 
 export interface GroupInfo {

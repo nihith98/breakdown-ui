@@ -43,6 +43,7 @@ export async function GET(
         ? payload.familyList.map((f: any) => ({
             familyId: f.familyId,
             familyName: f.familyName,
+            familyHex: f.familyHex ?? '#888888',
             memberIds: f.personIds ?? f.memberIds ?? [],
           }))
         : null,

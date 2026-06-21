@@ -27,7 +27,15 @@
 }
 .backLink:hover { color: var(--fg-secondary); }
 
-/* ===== Row 2: group name ===== */
+/* ===== Row 2: group name + joining code ===== */
+.nameRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-width: 0;
+}
+
 .groupName {
   margin: 0;
   font-family: var(--font-sans);
@@ -38,7 +46,49 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
+
+.joiningCodeWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.joiningCodeLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--fg-tertiary);
+}
+
+.joiningCode {
+  font-family: var(--font-mono);
+  font-size: var(--type-code-sm);
+  color: var(--syntax-string);
+  letter-spacing: 0.3px;
+}
+
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--fg-tertiary);
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+.copyBtn:hover { color: var(--fg-primary); border-color: var(--border-hover); }
+.copyBtnCopied { color: var(--money-positive) !important; border-color: var(--money-positive) !important; }
 
 /* ===== Row 3: description comment ===== */
 .description {

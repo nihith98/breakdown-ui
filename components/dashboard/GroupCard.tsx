@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { GroupSummary } from '@/types';
 import styles from '@/app/(dashboard)/dashboard.module.css';
+import { getCurrencySymbol } from '@/lib/currency';
 
 interface GroupCardProps {
   group: GroupSummary;
@@ -18,8 +19,7 @@ export function GroupCard({ group }: GroupCardProps) {
 
   const getBalanceValue = () => {
     if (isSettled) return 'Settled up';
-    const sign = isNegative ? '-' : '+';
-    return `${sign}$${Math.abs(group.net).toFixed(2)}`;
+    return `${getCurrencySymbol()}${Math.abs(group.net).toFixed(2)}`;
   };
 
   return (
