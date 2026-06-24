@@ -328,3 +328,80 @@
   color: var(--syntax-comment);
   font-size: var(--type-code-sm);
 }
+
+/* ===== MOBILE RESPONSIVE (<=768px) ===== */
+@media (max-width: 768px) {
+  /* Row becomes two-line card: name+amount on top, meta+date below */
+  .txnRow,
+  .txnRowSettlement {
+    align-items: flex-start;
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  /* Hide JSON braces and dot separator — too noisy on small screens */
+  .txnBrace,
+  .txnCloser,
+  .txnBraceSettlement,
+  .txnSep {
+    display: none;
+  }
+
+  /* Body wraps: name fills row 1, meta drops to row 2 */
+  .txnBody {
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 0;
+  }
+
+  /* Row 1 left: transaction name */
+  .txnName,
+  .txnNameSettlement {
+    width: 100%;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fg-primary);
+  }
+
+  /* Row 2 left: "You paid..." meta text */
+  .txnMeta {
+    width: 100%;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    font-size: 11px;
+    color: var(--fg-tertiary);
+    padding-top: 3px;
+    line-height: 1.4;
+  }
+
+  /* Right column: amount on top, date below */
+  .txnRight {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    padding-top: 1px;
+  }
+
+  .txnAmount {
+    min-width: unset;
+    font-size: 13px;
+    text-align: right;
+  }
+
+  .txnDate {
+    min-width: unset;
+    font-size: 10px;
+    text-align: right;
+  }
+
+  .txnNotInvolved {
+    min-width: unset;
+    font-size: 10px;
+    text-align: right;
+  }
+}
