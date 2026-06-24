@@ -256,3 +256,48 @@
   border-color: var(--border-hover);
   color: var(--fg-primary);
 }
+
+/* ===== MOBILE RESPONSIVE (<=768px) ===== */
+@media (max-width: 768px) {
+  .nameRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+
+  .groupName {
+    white-space: normal;
+    font-size: 22px;
+  }
+
+  .joiningCodeWrap {
+    flex-shrink: 1;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .joiningCode {
+    word-break: break-all;
+    font-size: 10px;
+  }
+
+  .summaryCard {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .balance {
+    align-items: flex-start;
+  }
+
+  .actions {
+    gap: var(--space-xs);
+  }
+
+  .btnPrimary,
+  .btnHighlight,
+  .btnGhost {
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+}
