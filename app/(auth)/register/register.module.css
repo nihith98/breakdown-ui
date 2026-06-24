@@ -192,3 +192,15 @@
     transform: rotate(360deg);
   }
 }
+
+/* ===== MOBILE RESPONSIVE (<=768px) ===== */
+@media (max-width: 768px) {
+  .card {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    padding: 24px 16px;
+  }
+}
