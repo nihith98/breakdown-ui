@@ -331,77 +331,63 @@
 
 /* ===== MOBILE RESPONSIVE (<=768px) ===== */
 @media (max-width: 768px) {
-  /* Row becomes two-line card: name+amount on top, meta+date below */
+  /* Keep braces + monospace aesthetic; slightly more breathing room */
   .txnRow,
   .txnRowSettlement {
+    padding: 7px 12px;
     align-items: flex-start;
-    padding: 10px 12px;
-    gap: 6px;
+    gap: 4px;
   }
 
-  /* Hide JSON braces and dot separator — too noisy on small screens */
-  .txnBrace,
-  .txnCloser,
-  .txnBraceSettlement,
+  /* Body becomes a column: name on row 1, meta on row 2 */
+  .txnBody {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  /* Name fills the body width */
+  .txnName,
+  .txnNameSettlement {
+    max-width: 100%;
+  }
+
+  /* Hide dot separator — name has full width now */
   .txnSep {
     display: none;
   }
 
-  /* Body wraps: name fills row 1, meta drops to row 2 */
-  .txnBody {
-    flex-wrap: wrap;
-    align-content: flex-start;
-    gap: 0;
-  }
-
-  /* Row 1 left: transaction name */
-  .txnName,
-  .txnNameSettlement {
-    width: 100%;
-    max-width: 100%;
+  /* Meta drops to second row, slightly smaller, still truncated */
+  .txnMeta {
+    font-size: 11px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--fg-primary);
+    max-width: 100%;
   }
 
-  /* Row 2 left: "You paid..." meta text */
-  .txnMeta {
-    width: 100%;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-    font-size: 11px;
-    color: var(--fg-tertiary);
-    padding-top: 3px;
-    line-height: 1.4;
-  }
-
-  /* Right column: amount on top, date below */
+  /* Right column: amount above, date below */
   .txnRight {
     flex-direction: column;
     align-items: flex-end;
-    gap: 3px;
-    padding-top: 1px;
+    gap: 2px;
+    flex-shrink: 0;
   }
 
   .txnAmount {
     min-width: unset;
-    font-size: 13px;
-    text-align: right;
+    order: 1;
   }
 
   .txnDate {
     min-width: unset;
     font-size: 10px;
-    text-align: right;
+    order: 2;
   }
 
   .txnNotInvolved {
     min-width: unset;
     font-size: 10px;
-    text-align: right;
   }
 }
