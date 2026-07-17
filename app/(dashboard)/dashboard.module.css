@@ -21,6 +21,8 @@
   font-family: var(--font-mono);
   font-size: 12px;
   gap: var(--space-md);
+  /* Never let top bar content (breadcrumbs) widen the shell's grid track */
+  min-width: 0;
 }
 
 .topBarLeft {
@@ -29,6 +31,8 @@
   gap: var(--space-md);
   border-right: 1px solid var(--border-strong);
   padding-right: var(--space-md);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .wordmark {
@@ -48,12 +52,17 @@
   align-items: center;
   gap: var(--space-sm);
   flex: 1;
+  /* Flex items default to min-width:auto and refuse to shrink below their
+     content, which pushes the whole layout wider than the viewport on mobile */
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .breadcrumbItem {
   display: inline-flex;
   align-items: center;
   gap: var(--space-sm);
+  flex-shrink: 0;
 }
 
 .breadcrumbLink {
@@ -115,7 +124,8 @@
   padding: var(--space-md);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .userChip {
@@ -271,6 +281,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  /* Grid items default to min-width:auto — allow shrinking to the track size */
+  min-width: 0;
 }
 
 .mainInner {

@@ -1,0 +1,24 @@
+<!doctype html>
+<!-- QA harness: renders the app in an exact-width iframe so mobile media queries
+     evaluate at true phone width regardless of the outer browser size.
+     Usage: /qa-frame.html?path=/groups&w=390&h=844 -->
+<html>
+<head>
+<meta charset="utf-8">
+<title>QA mobile frame</title>
+<style>
+  body { margin: 0; background: #444; display: flex; justify-content: flex-start; }
+  iframe { border: 2px solid #e91e63; margin: 4px; background: #fff; }
+</style>
+</head>
+<body>
+<iframe id="f"></iframe>
+<script>
+  const q = new URLSearchParams(location.search);
+  const f = document.getElementById('f');
+  f.style.width = (parseInt(q.get('w')) || 390) + 'px';
+  f.style.height = (parseInt(q.get('h')) || 844) + 'px';
+  f.src = q.get('path') || '/';
+</script>
+</body>
+</html>
