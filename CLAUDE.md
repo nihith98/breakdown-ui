@@ -228,18 +228,18 @@ describe('test expense creation', () => { ... });
 
 ### New Developer Onboarding
 1. Read [`architecture.md`](architecture.md) (5 min) — understand Next.js server/client component model
-2. Read [`docs/architecture-deep-dives/server-components.md`](docs/architecture-deep-dives/server-components.md) — when to use server vs. client
+2. Read [`docs/architecture-deep-dives/state-management.md`](docs/architecture-deep-dives/state-management.md) — when to use server vs. client
 3. Review [`CLAUDE.md`](CLAUDE.md) (this file) — conventions and hard rules
 
 ### Building a New Page
-1. Read [`docs/implementation-guides/adding-a-page.md`](docs/implementation-guides/adding-a-page.md) — step-by-step checklist
+1. Read [`docs/implementation-guides/adding-a-screen.md`](docs/implementation-guides/adding-a-screen.md) — step-by-step checklist
 2. Create server component in `app/` directory for data fetching
 3. Extract interactive UI into `'use client'` components in `components/`
 4. Use `'use server'` actions in `app/*/actions.ts` for mutations
 5. Write tests using Jest + React Testing Library
 
 ### Adding API Integration
-1. Read [`docs/architecture-deep-dives/api-routes.md`](docs/architecture-deep-dives/api-routes.md) — API route patterns
+1. Read [`docs/architecture-deep-dives/api-integration.md`](docs/architecture-deep-dives/api-integration.md) — API route patterns
 2. Create API route in `app/api/` that calls Java backend via `apiClient`
 3. Use `handleResponseStructure()` to parse backend response
 4. Call API route from server components or server actions

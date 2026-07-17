@@ -42,7 +42,6 @@ function buildSegments(pathname: string, groupName: string | null): BreadcrumbSe
     families: 'Families',
     account: 'Account',
     transactions: 'Transactions',
-    orchestration: 'Orchestration',
   };
 
   if (parts[0] && labelMap[parts[0]]) {
